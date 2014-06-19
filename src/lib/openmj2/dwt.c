@@ -534,6 +534,11 @@ static void dwt_decode_tile(opj_tcd_tilecomp_t* tilec, int numres, DWT1DFN dwt_1
 	int w = tilec->x1 - tilec->x0;
 
 	h.mem = (int*)opj_aligned_malloc(dwt_decode_max_resolution(tr, numres) * sizeof(int));
+	if (!h.mem) {
+		fprintf(stderr, "DWT: could not allocate memory to decode tile");
+		return;
+	}
+
 	v.mem = h.mem;
 
 	while( --numres) {

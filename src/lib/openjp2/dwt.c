@@ -842,6 +842,8 @@ OPJ_BOOL opj_dwt_decode_real(opj_tcd_tilecomp_t* restrict tilec, OPJ_UINT32 numr
 	OPJ_UINT32 w = (OPJ_UINT32)(tilec->x1 - tilec->x0);
 
 	h.wavelet = (opj_v4_t*) opj_aligned_malloc((opj_dwt_max_resolution(res, numres)+5) * sizeof(opj_v4_t));
+	if (!h.wavelet)
+		return OPJ_FALSE;
 	v.wavelet = h.wavelet;
 
 	while( --numres) {

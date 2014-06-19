@@ -1499,7 +1499,6 @@ OPJ_BOOL opj_j2k_check_poc_val( const opj_poc_t *p_pocs,
                 opj_event_msg(p_manager , EVT_ERROR, "Not enough memory for checking the poc values.\n");
                 return OPJ_FALSE;
         }
-        memset(packet_array,0,step_l * p_num_layers* sizeof(OPJ_UINT32));
 
         if (p_nb_pocs == 0) {
         opj_free(packet_array);
@@ -2038,7 +2037,6 @@ static OPJ_BOOL opj_j2k_read_siz(opj_j2k_t *p_j2k,
                 return OPJ_FALSE;
         }
 
-        memset(l_image->comps,0,l_image->numcomps * sizeof(opj_image_comp_t));
         l_img_comp = l_image->comps;
 
         /* Read the component information */
@@ -2167,7 +2165,6 @@ static OPJ_BOOL opj_j2k_read_siz(opj_j2k_t *p_j2k,
                 opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to take in charge SIZ marker\n");
                 return OPJ_FALSE;
         }
-        memset(l_cp->tcps,0,l_nb_tiles*sizeof(opj_tcp_t));
 
 #ifdef USE_JPWL
         if (l_cp->correct) {
@@ -2188,27 +2185,24 @@ static OPJ_BOOL opj_j2k_read_siz(opj_j2k_t *p_j2k,
                 opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to take in charge SIZ marker\n");
                 return OPJ_FALSE;
         }
-        memset(p_j2k->m_specific_param.m_decoder.m_default_tcp->tccps ,0,l_image->numcomps*sizeof(opj_tccp_t));
 
         p_j2k->m_specific_param.m_decoder.m_default_tcp->m_mct_records =
-                        (opj_mct_data_t*)opj_malloc(OPJ_J2K_MCT_DEFAULT_NB_RECORDS * sizeof(opj_mct_data_t));
+                        (opj_mct_data_t*)opj_calloc(OPJ_J2K_MCT_DEFAULT_NB_RECORDS ,sizeof(opj_mct_data_t));
 
         if (! p_j2k->m_specific_param.m_decoder.m_default_tcp->m_mct_records) {
                 opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to take in charge SIZ marker\n");
                 return OPJ_FALSE;
         }
-        memset(p_j2k->m_specific_param.m_decoder.m_default_tcp->m_mct_records,0,OPJ_J2K_MCT_DEFAULT_NB_RECORDS * sizeof(opj_mct_data_t));
         p_j2k->m_specific_param.m_decoder.m_default_tcp->m_nb_max_mct_records = OPJ_J2K_MCT_DEFAULT_NB_RECORDS;
 
         p_j2k->m_specific_param.m_decoder.m_default_tcp->m_mcc_records =
                         (opj_simple_mcc_decorrelation_data_t*)
-                        opj_malloc(OPJ_J2K_MCC_DEFAULT_NB_RECORDS * sizeof(opj_simple_mcc_decorrelation_data_t));
+                        opj_calloc(OPJ_J2K_MCC_DEFAULT_NB_RECORDS, sizeof(opj_simple_mcc_decorrelation_data_t));
 
         if (! p_j2k->m_specific_param.m_decoder.m_default_tcp->m_mcc_records) {
                 opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to take in charge SIZ marker\n");
                 return OPJ_FALSE;
         }
-        memset(p_j2k->m_specific_param.m_decoder.m_default_tcp->m_mcc_records,0,OPJ_J2K_MCC_DEFAULT_NB_RECORDS * sizeof(opj_simple_mcc_decorrelation_data_t));
         p_j2k->m_specific_param.m_decoder.m_default_tcp->m_nb_max_mcc_records = OPJ_J2K_MCC_DEFAULT_NB_RECORDS;
 
         /* set up default dc level shift */
@@ -2220,12 +2214,11 @@ static OPJ_BOOL opj_j2k_read_siz(opj_j2k_t *p_j2k,
 
         l_current_tile_param = l_cp->tcps;
         for     (i = 0; i < l_nb_tiles; ++i) {
-                l_current_tile_param->tccps = (opj_tccp_t*) opj_malloc(l_image->numcomps * sizeof(opj_tccp_t));
+                l_current_tile_param->tccps = (opj_tccp_t*) opj_calloc(l_image->numcomps, sizeof(opj_tccp_t));
                 if (l_current_tile_param->tccps == 00) {
                         opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to take in charge SIZ marker\n");
                         return OPJ_FALSE;
                 }
-                memset(l_current_tile_param->tccps,0,l_image->numcomps * sizeof(opj_tccp_t));
 
                 ++l_current_tile_param;
         }
@@ -3576,13 +3569,12 @@ OPJ_BOOL j2k_read_ppm_v3 (
                 l_cp->ppm_len = l_N_ppm;
                 l_cp->ppm_data_read = 0;
 
-                l_cp->ppm_data = (OPJ_BYTE *) opj_malloc(l_cp->ppm_len);
+                l_cp->ppm_data = (OPJ_BYTE *) opj_calloc(1,l_cp->ppm_len);
                 l_cp->ppm_buffer = l_cp->ppm_data;
                 if (l_cp->ppm_data == 00) {
                         opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to read ppm marker\n");
                         return OPJ_FALSE;
                 }
-                memset(l_cp->ppm_data,0,l_cp->ppm_len);
 
                 l_cp->ppm_data_current = l_cp->ppm_data;
 
@@ -4128,6 +4120,11 @@ OPJ_BOOL opj_j2k_read_sot ( opj_j2k_t *p_j2k,
                                 if (!p_j2k->cstr_index->tile_index[p_j2k->m_current_tile_number].tp_index) {
                                         p_j2k->cstr_index->tile_index[p_j2k->m_current_tile_number].tp_index =
                                                 (opj_tp_index_t*)opj_calloc(l_num_parts, sizeof(opj_tp_index_t));
+                                        if (!p_j2k->cstr_index->tile_index[p_j2k->m_current_tile_number].tp_index) {
+                                        	   opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate tile index\n");
+                                        	   return OPJ_FALSE;
+                                        }
+
                                 }
                                 else {
                                         opj_tp_index_t *new_tp_index = (opj_tp_index_t *) opj_realloc(
@@ -4149,6 +4146,10 @@ OPJ_BOOL opj_j2k_read_sot ( opj_j2k_t *p_j2k,
                                                 p_j2k->cstr_index->tile_index[p_j2k->m_current_tile_number].tp_index =
                                                         (opj_tp_index_t*)opj_calloc( p_j2k->cstr_index->tile_index[p_j2k->m_current_tile_number].current_nb_tps,
                                                                         sizeof(opj_tp_index_t));
+                                                if (!p_j2k->cstr_index->tile_index[p_j2k->m_current_tile_number].tp_index) {
+													   opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate tile index\n");
+													   return OPJ_FALSE;
+												  }
                                         }
 
                                         if ( l_current_part >= p_j2k->cstr_index->tile_index[p_j2k->m_current_tile_number].current_nb_tps ){
@@ -5853,12 +5854,11 @@ void opj_j2k_setup_decoder(opj_j2k_t *j2k, opj_dparameters_t *parameters)
 
 opj_j2k_t* opj_j2k_create_compress(void)
 {
-        opj_j2k_t *l_j2k = (opj_j2k_t*) opj_malloc(sizeof(opj_j2k_t));
+        opj_j2k_t *l_j2k = (opj_j2k_t*) opj_calloc(1,sizeof(opj_j2k_t));
         if (!l_j2k) {
                 return NULL;
         }
 
-        memset(l_j2k,0,sizeof(opj_j2k_t));
 
         l_j2k->m_is_decoder = 0;
         l_j2k->m_cp.m_is_decoder = 0;
@@ -6272,6 +6272,10 @@ void opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
         if (parameters->cp_fixed_alloc && parameters->cp_matrice) {
                 size_t array_size = (size_t)parameters->tcp_numlayers * (size_t)parameters->numresolution * 3 * sizeof(OPJ_INT32);
                 cp->m_specific_param.m_enc.m_matrice = (OPJ_INT32 *) opj_malloc(array_size);
+                if (!cp->m_specific_param.m_enc.m_matrice) {
+				   opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate copy of user encoding parameters matrix \n");
+				   return;
+			    }
                 memcpy(cp->m_specific_param.m_enc.m_matrice, parameters->cp_matrice, array_size);
         }
 
@@ -6286,9 +6290,11 @@ void opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
         /* comment string */
         if(parameters->cp_comment) {
                 cp->comment = (char*)opj_malloc(strlen(parameters->cp_comment) + 1);
-                if(cp->comment) {
-                        strcpy(cp->comment, parameters->cp_comment);
+                if(!cp->comment) {
+                	 opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate copy of comment string\n");
+                	 return;
                 }
+                strcpy(cp->comment, parameters->cp_comment);
         }
 
         /*
@@ -6424,24 +6430,48 @@ void opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
                 }
 
                 tcp->tccps = (opj_tccp_t*) opj_calloc(image->numcomps, sizeof(opj_tccp_t));
+                if (!tcp->tccps) {
+					   opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate tile component coding parameters\n");
+					   return;
+				  }
 
                 if (parameters->mct_data) {
                       
+					OPJ_INT32 * l_dc_shift = NULL;
                     OPJ_UINT32 lMctSize = image->numcomps * image->numcomps * (OPJ_UINT32)sizeof(OPJ_FLOAT32);
                     OPJ_FLOAT32 * lTmpBuf = (OPJ_FLOAT32*)opj_malloc(lMctSize);
-                    OPJ_INT32 * l_dc_shift = (OPJ_INT32 *) ((OPJ_BYTE *) parameters->mct_data + lMctSize);
+                    if (!lTmpBuf) {
+                    	opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate temp buffer\n");
+                        return;
+                    }
+                    l_dc_shift = (OPJ_INT32 *) ((OPJ_BYTE *) parameters->mct_data + lMctSize);
+                    if (!l_dc_shift) {
+						opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT dc shift buffer\n");
+					    return;
+					}
 
                     tcp->mct = 2;
                     tcp->m_mct_coding_matrix = (OPJ_FLOAT32*)opj_malloc(lMctSize);
+                    if (! tcp->m_mct_coding_matrix) {
+						opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT coding matrix \n");
+						return;
+					}
                     memcpy(tcp->m_mct_coding_matrix,parameters->mct_data,lMctSize);
                     memcpy(lTmpBuf,parameters->mct_data,lMctSize);
 
                     tcp->m_mct_decoding_matrix = (OPJ_FLOAT32*)opj_malloc(lMctSize);
+                    if (! tcp->m_mct_decoding_matrix) {
+						opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT decoding matrix \n");
+						return;
+					}
                     assert(opj_matrix_inversion_f(lTmpBuf,(tcp->m_mct_decoding_matrix),image->numcomps));
 
                     tcp->mct_norms = (OPJ_FLOAT64*)
                                     opj_malloc(image->numcomps * sizeof(OPJ_FLOAT64));
-
+                    if (! tcp->mct_norms) {
+						opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT norms \n");
+						return;
+					}
                     opj_calculate_norms(tcp->mct_norms,image->numcomps,tcp->m_mct_decoding_matrix);
                     opj_free(lTmpBuf);
 
@@ -8217,23 +8247,21 @@ OPJ_BOOL opj_j2k_set_decode_area(       opj_j2k_t *p_j2k,
 
 opj_j2k_t* opj_j2k_create_decompress(void)
 {
-        opj_j2k_t *l_j2k = (opj_j2k_t*) opj_malloc(sizeof(opj_j2k_t));
+        opj_j2k_t *l_j2k = (opj_j2k_t*) opj_calloc(1,sizeof(opj_j2k_t));
         if (!l_j2k) {
                 return 00;
         }
-        memset(l_j2k,0,sizeof(opj_j2k_t));
 
         l_j2k->m_is_decoder = 1;
         l_j2k->m_cp.m_is_decoder = 1;
 
-        l_j2k->m_specific_param.m_decoder.m_default_tcp = (opj_tcp_t*) opj_malloc(sizeof(opj_tcp_t));
+        l_j2k->m_specific_param.m_decoder.m_default_tcp = (opj_tcp_t*) opj_calloc(1,sizeof(opj_tcp_t));
         if (!l_j2k->m_specific_param.m_decoder.m_default_tcp) {
                 opj_j2k_destroy(l_j2k);
                 return 00;
         }
-        memset(l_j2k->m_specific_param.m_decoder.m_default_tcp,0,sizeof(opj_tcp_t));
 
-        l_j2k->m_specific_param.m_decoder.m_header_data = (OPJ_BYTE *) opj_malloc(OPJ_J2K_DEFAULT_HEADER_SIZE);
+        l_j2k->m_specific_param.m_decoder.m_header_data = (OPJ_BYTE *) opj_calloc(1,OPJ_J2K_DEFAULT_HEADER_SIZE);
         if (! l_j2k->m_specific_param.m_decoder.m_header_data) {
                 opj_j2k_destroy(l_j2k);
                 return 00;
