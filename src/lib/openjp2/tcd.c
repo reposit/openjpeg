@@ -1867,7 +1867,7 @@ OPJ_BOOL opj_tcd_dc_level_shift_encode ( opj_tcd_t *p_tcd )
                 }
                 else {
                         for (i = 0; i < l_nb_elem; ++i) {
-                                *l_current_ptr = (*l_current_ptr - l_tccp->m_dc_level_shift) << LOSSY_FP_PRECISION ;
+                                *l_current_ptr = (*l_current_ptr - l_tccp->m_dc_level_shift) << DWT_LOSSY_FP_PRECISION ;
                                 ++l_current_ptr;
                         }
                 }

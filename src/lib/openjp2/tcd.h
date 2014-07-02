@@ -49,7 +49,7 @@ each other. The functions in TCD.C are used by other functions in J2K.C.
 /** @defgroup TCD TCD - Implementation of a tile coder/decoder */
 /*@{*/
 
-#define LOSSY_FP_PRECISION 11
+#define DWT_LOSSY_FP_PRECISION 11  // DWT binary fractional precision
 
 
 /**

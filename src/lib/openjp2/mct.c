@@ -150,9 +150,9 @@ void opj_mct_encode_real(
 {
 	OPJ_UINT32 i;
 	for(i = 0; i < n; ++i) {
-		OPJ_INT32 r = c0[i] << LOSSY_FP_PRECISION;
-		OPJ_INT32 g = c1[i] << LOSSY_FP_PRECISION;
-		OPJ_INT32 b = c2[i] << LOSSY_FP_PRECISION;
+		OPJ_INT32 r = c0[i] << DWT_LOSSY_FP_PRECISION;
+		OPJ_INT32 g = c1[i] << DWT_LOSSY_FP_PRECISION;
+		OPJ_INT32 b = c2[i] << DWT_LOSSY_FP_PRECISION;
 		OPJ_INT32 y =  opj_int_fix_mul(r, 2449) + opj_int_fix_mul(g, 4809) + opj_int_fix_mul(b, 934);
 		OPJ_INT32 u = -opj_int_fix_mul(r, 1382) - opj_int_fix_mul(g, 2714) + opj_int_fix_mul(b, 4096);
 		OPJ_INT32 v =  opj_int_fix_mul(r, 4096) - opj_int_fix_mul(g, 3430) - opj_int_fix_mul(b, 666);
@@ -174,9 +174,9 @@ void opj_mct_encode_real_with_dcshift(
 {
 	OPJ_UINT32 i;
 	for(i = 0; i < n; ++i) {
-		OPJ_INT32 r = (c0[i] - shift) << LOSSY_FP_PRECISION;
-		OPJ_INT32 g = (c1[i] - shift) << LOSSY_FP_PRECISION;
-		OPJ_INT32 b = (c2[i] - shift) << LOSSY_FP_PRECISION;
+		OPJ_INT32 r = (c0[i] - shift) << DWT_LOSSY_FP_PRECISION;
+		OPJ_INT32 g = (c1[i] - shift) << DWT_LOSSY_FP_PRECISION;
+		OPJ_INT32 b = (c2[i] - shift) << DWT_LOSSY_FP_PRECISION;
 		OPJ_INT32 y =  opj_int_fix_mul(r, 2449) + opj_int_fix_mul(g, 4809) + opj_int_fix_mul(b, 934);
 		OPJ_INT32 u = -opj_int_fix_mul(r, 1382) - opj_int_fix_mul(g, 2714) + opj_int_fix_mul(b, 4096);
 		OPJ_INT32 v =  opj_int_fix_mul(r, 4096) - opj_int_fix_mul(g, 3430) - opj_int_fix_mul(b, 666);
