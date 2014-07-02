@@ -53,7 +53,17 @@ static OPJ_INT16 opj_t1_getnmsedec_sig(OPJ_UINT32 x, OPJ_UINT32 bitpos);
 static OPJ_INT16 opj_t1_getnmsedec_ref(OPJ_UINT32 x, OPJ_UINT32 bitpos);
 static void opj_t1_updateflags(opj_flag_t *flagsp, OPJ_UINT32 s, OPJ_UINT32 stride);
 /**
-Encode significant pass
+Encode significance pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param vsc		Vertically stripe-causal context
 */
 static void opj_t1_enc_sigpass_step(opj_t1_t *t1,
                                     opj_flag_t *flagsp,
@@ -101,7 +111,17 @@ static INLINE void opj_t1_dec_sigpass_step_mqc_vsc(
 
 
 /**
-Encode significant pass
+Encode significance pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param vsc		Vertically stripe-causal context
 */
 static void opj_t1_enc_sigpass( opj_t1_t *t1,
                                 OPJ_INT32 bpno,
@@ -130,7 +150,17 @@ static void opj_t1_dec_sigpass_mqc_vsc(
 
 
 /**
-Encode refinement pass
+Encode refinement pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param vsc		Vertically stripe-causal context
+
 */
 static void opj_t1_enc_refpass_step(opj_t1_t *t1,
                                     opj_flag_t *flagsp,
@@ -144,6 +174,12 @@ static void opj_t1_enc_refpass_step(opj_t1_t *t1,
 
 /**
 Encode refinement pass
+
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param cblksty  coding style
 */
 static void opj_t1_enc_refpass( opj_t1_t *t1,
                                 OPJ_INT32 bpno,
@@ -203,7 +239,17 @@ static INLINE void opj_t1_dec_refpass_step_mqc_vsc(
 
 
 /**
-Encode clean-up pass
+Encode clean-up pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param partial  ???
+@param vsc		Vertically stripe-causal context
 */
 static void opj_t1_enc_clnpass_step(
 		opj_t1_t *t1,
@@ -240,6 +286,12 @@ static void opj_t1_dec_clnpass_step_vsc(
 		OPJ_INT32 vsc);
 /**
 Encode clean-up pass
+
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param cblksty  coding style
 */
 static void opj_t1_enc_clnpass(
 		opj_t1_t *t1,
@@ -361,6 +413,19 @@ void opj_t1_updateflags(opj_flag_t *flagsp, OPJ_UINT32 s, OPJ_UINT32 stride) {
 	sp[1]  |= T1_SIG_NW;
 }
 
+/**
+Encode significance pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param vsc		Vertically stripe-causal context
+*/
 void opj_t1_enc_sigpass_step(   opj_t1_t *t1,
                                 opj_flag_t *flagsp,
                                 OPJ_INT32 *datap,
@@ -475,7 +540,19 @@ INLINE void opj_t1_dec_sigpass_step_mqc_vsc(
 }                               /* VSC and  BYPASS by Antonin */
 
 
+/**
+Encode significance pass step
 
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param vsc		Vertically stripe-causal context
+*/
 void opj_t1_enc_sigpass(opj_t1_t *t1,
                         OPJ_INT32 bpno,
                         OPJ_UINT32 orient,
@@ -605,7 +682,19 @@ void opj_t1_dec_sigpass_mqc_vsc(
 }                               /* VSC and  BYPASS by Antonin */
 
 
+/**
+Encode refinement pass step
 
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param vsc		Vertically stripe-causal context
+
+*/
 void opj_t1_enc_refpass_step(   opj_t1_t *t1,
                                 opj_flag_t *flagsp,
                                 OPJ_INT32 *datap,
@@ -698,7 +787,15 @@ INLINE void opj_t1_dec_refpass_step_mqc_vsc(
         }
 }                               /* VSC and  BYPASS by Antonin  */
 
+/**
+Encode refinement pass
 
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param cblksty  coding style
+*/
 void opj_t1_enc_refpass(
 		opj_t1_t *t1,
 		OPJ_INT32 bpno,
@@ -824,7 +921,19 @@ void opj_t1_dec_refpass_mqc_vsc(
         }
 }                               /* VSC and  BYPASS by Antonin */
 
+/**
+Encode clean-up pass step
 
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param partial  ???
+@param vsc		Vertically stripe-causal context
+*/
 void opj_t1_enc_clnpass_step(
 		opj_t1_t *t1,
 		opj_flag_t *flagsp,
@@ -935,6 +1044,15 @@ LABEL_PARTIAL:
 	*flagsp &= ~T1_VISIT;
 }
 
+/**
+Encode clean-up pass
+
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+@param type		type of encoding: 1 indicates RAW encoding, 0 indicates normal encoding
+@param cblksty  coding style
+*/
 void opj_t1_enc_clnpass(
 		opj_t1_t *t1,
 		OPJ_INT32 bpno,
@@ -1551,6 +1669,20 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 }
 
 /** mod fixed_quality */
+/**
+Encode a code-block of a tile
+@param t1           t1 struct
+@param cblk 		code block to encode
+@param orient	    sub-band orientation: LL, LH, HL, HH
+@param compno		component number
+@param level		resolution level
+@param qmfbid		lossy or lossless
+@param stepsize
+@param cblksty  	coding style
+@param numcomps		number of components
+@param tile			 The tile to encode
+@param mct_norms  	basis norms from MCT transform
+*/
 void opj_t1_encode_cblk(opj_t1_t *t1,
                         opj_tcd_cblk_enc_t* cblk,
                         OPJ_UINT32 orient,

@@ -55,17 +55,21 @@ The functions in J2K.C have for goal to read/write the several parts of the code
 #define J2K_CP_CSTY_SOP 0x02
 #define J2K_CP_CSTY_EPH 0x04
 #define J2K_CCP_CSTY_PRT 0x01
-#define J2K_CCP_CBLKSTY_LAZY 0x01     /**< Selective arithmetic coding bypass */
-#define J2K_CCP_CBLKSTY_RESET 0x02    /**< Reset context probabilities on coding pass boundaries */
+#define J2K_CCP_CBLKSTY_LAZY 0x01     /**< Selective arithmetic coding bypass - bypass significance and refinement
+                                          passes after four most significant bit planes have been encoded  */
+#define J2K_CCP_CBLKSTY_RESET 0x02    /**< Reset context probabilities on coding pass boundaries
+										  This controls where the end of encoded data is and limits the amount
+										  of potentially lost data in the event of a transmission error.*/
 #define J2K_CCP_CBLKSTY_TERMALL 0x04  /**< Termination on each coding pass */
 #define J2K_CCP_CBLKSTY_VSC 0x08      /**< Vertically stripe causal context */
-#define J2K_CCP_CBLKSTY_PTERM 0x10    /**< Predictable termination */
+#define J2K_CCP_CBLKSTY_PTERM 0x10    /**< Predictable termination. This can be used to implement error detection and concealment.*/
 #define J2K_CCP_CBLKSTY_SEGSYM 0x20   /**< Segmentation symbols are used */
 #define J2K_CCP_QNTSTY_NOQNT 0
 #define J2K_CCP_QNTSTY_SIQNT 1
 #define J2K_CCP_QNTSTY_SEQNT 2
 
-#define OPJ_J2K_DEFAULT_CBLK_DATA_SIZE 8192
+#define OPJ_J2K_DEFAULT_CBLK_DATA_SIZE 8192   // Note: maximum code block dimensions are 64 x 64
+                                              // so this value equals half maximum code block size
 
 /* ----------------------------------------------------------------------- */
 
@@ -185,7 +189,8 @@ typedef struct opj_tccp
 	OPJ_UINT32 cblkh;
 	/** code-block coding style */
 	OPJ_UINT32 cblksty;
-	/** discrete wavelet transform identifier */
+	/** discrete wavelet transform identifier:
+	 * irreversible == 0, reversible == 1 */
 	OPJ_UINT32 qmfbid;
 	/** quantisation style */
 	OPJ_UINT32 qntsty;
