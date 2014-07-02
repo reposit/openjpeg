@@ -170,6 +170,7 @@ typedef struct opj_tcd_tilecomp
 FIXME DOC
 */
 typedef struct opj_tcd_tile {
+	OPJ_BYTE* compressedData;
 	OPJ_INT32 x0, y0, x1, y1;		/* dimension of the tile : left upper corner (x0, y0) right low corner (x1,y1) */
 	OPJ_UINT32 numcomps;			/* number of components in tile */
 	opj_tcd_tilecomp_t *comps;	/* Components information */

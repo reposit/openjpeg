@@ -106,7 +106,7 @@ void tcd_dump(FILE *fd, opj_tcd_t *tcd, opj_tcd_image_t * img) {
 /**
 * Allocates memory for a decoding code block.
 */
-static OPJ_BOOL opj_tcd_code_block_dec_allocate (opj_tcd_cblk_dec_t * p_code_block);
+static OPJ_BOOL opj_tcd_code_block_dec_allocate (opj_tcd_cblk_dec_t * p_code_block, OPJ_BYTE* blockData);
 
 /**
  * Deallocates the decoding data of the given precinct.
@@ -116,7 +116,7 @@ static void opj_tcd_code_block_dec_deallocate (opj_tcd_precinct_t * p_precinct);
 /**
  * Allocates memory for an encoding code block.
  */
-static OPJ_BOOL opj_tcd_code_block_enc_allocate (opj_tcd_cblk_enc_t * p_code_block);
+static OPJ_BOOL opj_tcd_code_block_enc_allocate (opj_tcd_cblk_enc_t * p_code_block, OPJ_BYTE* blockData);
 
 /**
  * Deallocates the encoding data of the given precinct.
@@ -648,8 +648,8 @@ OPJ_BOOL FUNCTION (     opj_tcd_t *p_tcd,                        \
         /* room needed to store l_nb_code_blocks code blocks for a precinct*/                                                                                                                                     \
         OPJ_UINT32 l_nb_code_blocks_size;                           \
         /* size of data for a tile */                               \
-        OPJ_UINT32 l_data_size;                                     \
-                                                                    \
+        OPJ_UINT32 l_data_size=0;                                   \
+        OPJ_UINT32 l_cblckOffset=0;                                 \
         l_cp = p_tcd->cp;                                           \
         l_tcp = &(l_cp->tcps[p_tile_no]);                           \
         l_tile = p_tcd->tcd_image->tiles;                           \
@@ -673,8 +673,25 @@ OPJ_BOOL FUNCTION (     opj_tcd_t *p_tcd,                        \
             return OPJ_FALSE; \
         } \
         /*fprintf(stderr, "Tile border = %d,%d,%d,%d\n", l_tile->x0, l_tile->y0,l_tile->x1,l_tile->y1);*/                                                                                                         \
+        for(compno = 0; compno < l_tile->numcomps; ++compno) {      \
+                /*fprintf(stderr, "compno = %d/%d\n", compno, l_tile->numcomps);*/                                                                                                                                \
                                                                     \
-        /*tile->numcomps = image->numcomps; */                      \
+                /* border of each l_tile component (global) */      \
+                l_tilec->x0 = opj_int_ceildiv(l_tile->x0, (OPJ_INT32)l_image_comp->dx);                                                                                                                                          \
+                l_tilec->y0 = opj_int_ceildiv(l_tile->y0, (OPJ_INT32)l_image_comp->dy);                                                                                                                                          \
+                l_tilec->x1 = opj_int_ceildiv(l_tile->x1, (OPJ_INT32)l_image_comp->dx);                                                                                                                                          \
+                l_tilec->y1 = opj_int_ceildiv(l_tile->y1, (OPJ_INT32)l_image_comp->dy);                                                                                                                                          \
+                /*fprintf(stderr, "\tTile compo border = %d,%d,%d,%d\n", l_tilec->x0, l_tilec->y0,l_tilec->x1,l_tilec->y1);*/                                                                                     \
+                                                                    \
+                l_data_size += (OPJ_UINT32)(l_tilec->x1 - l_tilec->x0)           \
+                * (OPJ_UINT32)(l_tilec->y1 - l_tilec->y0) * (OPJ_UINT32)sizeof(OPJ_UINT32 );\
+        }\
+        /* only encoder allocates one single block of memory*/ \
+        if (!p_tcd->m_is_decoder) { \
+        	l_tile->compressedData = (OPJ_BYTE*)opj_malloc(l_data_size * l_tile->numcomps);\
+        	if (!l_tile->compressedData) \
+        		return OPJ_FALSE; \
+        } \
         for(compno = 0; compno < l_tile->numcomps; ++compno) {      \
                 /*fprintf(stderr, "compno = %d/%d\n", compno, l_tile->numcomps);*/                                                                                                                                \
                                                                     \
@@ -976,10 +993,11 @@ OPJ_BOOL FUNCTION (     opj_tcd_t *p_tcd,                        \
                                                 l_code_block->y0 = opj_int_max(cblkystart, l_current_precinct->y0);                                                                                                   \
                                                 l_code_block->x1 = opj_int_min(cblkxend, l_current_precinct->x1);                                                                                                     \
                                                 l_code_block->y1 = opj_int_min(cblkyend, l_current_precinct->y1);                                                                                                     \
-                                                                                                                                                                                                                  \
-                                                if (! FUNCTION_ELEMENT(l_code_block)) {                                                                                                                           \
+                                                 \
+                                                if (! FUNCTION_ELEMENT(l_code_block, p_tcd->m_is_decoder ? NULL : l_tile->compressedData + l_cblckOffset)) {                                                                                                                           \
                                                         return OPJ_FALSE;                                                                                                                                         \
-                                                }                                                                                                                                                                 \
+                                                }\
+                                                l_cblckOffset += OPJ_J2K_DEFAULT_CBLK_DATA_SIZE*2;\
                                                 ++l_code_block;                                                                                                                                                   \
                                         }                                                                                                                                                                         \
                                         ++l_current_precinct;                                                                                                                                                     \
@@ -1006,17 +1024,13 @@ OPJ_MACRO_TCD_ALLOCATE(opj_tcd_init_decode_tile, opj_tcd_cblk_dec_t, 0.5f, dec, 
 /**
  * Allocates memory for an encoding code block.
  */
-OPJ_BOOL opj_tcd_code_block_enc_allocate (opj_tcd_cblk_enc_t * p_code_block)
+OPJ_BOOL opj_tcd_code_block_enc_allocate (opj_tcd_cblk_enc_t * p_code_block, OPJ_BYTE* blockData)
 {
         if (! p_code_block->data) {
 
-                p_code_block->data = (OPJ_BYTE*) opj_malloc(OPJ_J2K_DEFAULT_CBLK_DATA_SIZE*2); /*why +1 ?*/
-                if(! p_code_block->data) {
-                        return OPJ_FALSE;
-                }
-
+        	    p_code_block->data = blockData;
                 p_code_block->data[0] = 0;
-                p_code_block->data+=1;
+                p_code_block->data+=1; //why +1 ?
 
                 /* no memset since data */
                 p_code_block->layers = (opj_tcd_layer_t*) opj_calloc(100, sizeof(opj_tcd_layer_t));
@@ -1036,16 +1050,16 @@ OPJ_BOOL opj_tcd_code_block_enc_allocate (opj_tcd_cblk_enc_t * p_code_block)
 /**
  * Allocates memory for a decoding code block.
  */
-OPJ_BOOL opj_tcd_code_block_dec_allocate (opj_tcd_cblk_dec_t * p_code_block)
+OPJ_BOOL opj_tcd_code_block_dec_allocate (opj_tcd_cblk_dec_t * p_code_block, OPJ_BYTE* blockData)
 {
         OPJ_UINT32 l_seg_size;
 
         if (! p_code_block->data) {
 
-                p_code_block->data = (OPJ_BYTE*) opj_malloc(OPJ_J2K_DEFAULT_CBLK_DATA_SIZE);
-                if (! p_code_block->data) {
-                        return OPJ_FALSE;
-                }
+				p_code_block->data = (OPJ_BYTE*) opj_malloc(OPJ_J2K_DEFAULT_CBLK_DATA_SIZE);
+				if(! p_code_block->data) {
+						return OPJ_FALSE;
+				}
                 p_code_block->data_max_size = OPJ_J2K_DEFAULT_CBLK_DATA_SIZE;
                 /*fprintf(stderr, "Allocate 8192 elements of code_block->data\n");*/
 
@@ -1459,6 +1473,9 @@ void opj_tcd_free_tile(opj_tcd_t *p_tcd)
 
         opj_free(l_tile->comps);
         l_tile->comps = 00;
+        if (p_tcd->tcd_image->tiles->compressedData)
+        	opj_free(p_tcd->tcd_image->tiles->compressedData);
+        p_tcd->tcd_image->tiles->compressedData = 00;
         opj_free(p_tcd->tcd_image->tiles);
         p_tcd->tcd_image->tiles = 00;
 }
@@ -1730,11 +1747,10 @@ void opj_tcd_code_block_dec_deallocate (opj_tcd_precinct_t * p_precinct)
                 /*fprintf(stderr,"nb_code_blocks =%d\t}\n", l_nb_code_blocks);*/
 
                 for (cblkno = 0; cblkno < l_nb_code_blocks; ++cblkno) {
-
-                        if (l_code_block->data) {
-                                opj_free(l_code_block->data);
-                                l_code_block->data = 00;
-                        }
+						if (l_code_block->data) {
+							opj_free(l_code_block->data);
+							l_code_block->data = 00;
+						}
 
                         if (l_code_block->segs) {
                                 opj_free(l_code_block->segs );
@@ -1761,10 +1777,9 @@ void opj_tcd_code_block_enc_deallocate (opj_tcd_precinct_t * p_precinct)
                 l_nb_code_blocks = p_precinct->block_size / sizeof(opj_tcd_cblk_enc_t);
                 
                 for     (cblkno = 0; cblkno < l_nb_code_blocks; ++cblkno)  {
-                        if (l_code_block->data) {
-                                opj_free(l_code_block->data - 1);
-                                l_code_block->data = 00;
-                        }
+            	        // code block data is allocated as one block per tile
+            	        // code block does not own the data - so doesn't need to de-allocate
+                        l_code_block->data = 00;
 
                         if (l_code_block->layers) {
                                 opj_free(l_code_block->layers );
