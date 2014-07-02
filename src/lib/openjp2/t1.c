@@ -329,7 +329,8 @@ static void opj_t1_encode_cblk( opj_t1_t *t1,
                                 OPJ_UINT32 cblksty,
                                 OPJ_UINT32 numcomps,
                                 opj_tcd_tile_t * tile,
-                                const OPJ_FLOAT64 * mct_norms);
+                                const OPJ_FLOAT64 * mct_norms,
+                                OPJ_INT32 max);
 
 /**
 Decode 1 code-block
@@ -1606,6 +1607,7 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 						OPJ_UINT32 cblk_w;
 						OPJ_UINT32 cblk_h;
 						OPJ_UINT32 i, j, tileIndex=0, tileLineAdvance;
+						OPJ_INT32 max = 0;
 
 						OPJ_INT32 x = cblk->x0 - band->x0;
 						OPJ_INT32 y = cblk->y0 - band->y0;
@@ -1636,7 +1638,9 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 						if (tccp->qmfbid == 1) {
 							for (j = 0; j < cblk_h; ++j) {
 								for (i = 0; i < cblk_w; ++i) {
-									 tiledp[tileIndex] <<= T1_NMSEDEC_FRACBITS;
+									 OPJ_INT32 tmp = tiledp[tileIndex] << T1_NMSEDEC_FRACBITS;
+									 max = opj_int_max(max, abs(tmp));
+									 tiledp[tileIndex] = tmp;
 									 tileIndex++;
 								}
 								tileIndex += tileLineAdvance;
@@ -1645,6 +1649,7 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 							for (j = 0; j < cblk_h; ++j) {
 								for (i = 0; i < cblk_w; ++i) {
 									OPJ_INT32 tmp = tiledp[tileIndex];
+									max = opj_int_max(max, abs(tmp));
 									tiledp[tileIndex] =
 										opj_int_fix_mul(
 										tmp,
@@ -1666,7 +1671,8 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 								tccp->cblksty,
 								tile->numcomps,
 								tile,
-								mct_norms);
+								mct_norms,
+								max);
 
 					} /* cblkno */
 				} /* precno */
@@ -1690,6 +1696,7 @@ Encode a code-block of a tile
 @param numcomps		number of components
 @param tile			 The tile to encode
 @param mct_norms  	basis norms from MCT transform
+@param max          data max abs value
 */
 void opj_t1_encode_cblk(opj_t1_t *t1,
                         opj_tcd_cblk_enc_t* cblk,
@@ -1701,7 +1708,8 @@ void opj_t1_encode_cblk(opj_t1_t *t1,
                         OPJ_UINT32 cblksty,
                         OPJ_UINT32 numcomps,
                         opj_tcd_tile_t * tile,
-                        const OPJ_FLOAT64 * mct_norms)
+                        const OPJ_FLOAT64 * mct_norms,
+                        OPJ_INT32 max)
 {
 	OPJ_FLOAT64 cumwmsedec = 0.0;
 
@@ -1711,18 +1719,8 @@ void opj_t1_encode_cblk(opj_t1_t *t1,
 	OPJ_INT32 bpno;
 	OPJ_UINT32 passtype;
 	OPJ_INT32 nmsedec = 0;
-	OPJ_INT32 max;
-	OPJ_UINT32 i,j;
 	OPJ_BYTE type = T1_TYPE_MQ;
 	OPJ_FLOAT64 tempwmsedec;
-
-	max = 0;
-	for (i = 0; i < t1->w; ++i) {
-		for (j = 0; j < t1->h; ++j) {
-			OPJ_INT32 tmp = abs(t1->data[i + j*t1->data_stride]);
-			max = opj_int_max(max, tmp);
-		}
-	}
 
 	cblk->numbps = max ? (OPJ_UINT32)((opj_int_floorlog2(max) + 1) - T1_NMSEDEC_FRACBITS) : 0;
 
