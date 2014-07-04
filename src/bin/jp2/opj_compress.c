@@ -1579,14 +1579,14 @@ int main(int argc, char **argv) {
 
     char indexfilename[OPJ_PATH_LEN];	/* index file name */
 
-    unsigned int i, num_images, imageno;
+    unsigned int i, num_images, num_encoded_images=0,imageno;
     img_fol_t img_fol;
     dircnt_t *dirptr = NULL;
 
     OPJ_BOOL bSuccess;
     OPJ_BOOL bUseTiles = OPJ_FALSE; /* OPJ_TRUE */
     OPJ_UINT32 l_nb_tiles = 4;
-	OPJ_FLOAT64 t;
+	OPJ_FLOAT64 t = opj_clock();
 
     /* set encoding parameters to default values */
     opj_set_default_encoder_parameters(&parameters);
@@ -1763,7 +1763,7 @@ int main(int argc, char **argv) {
             }
         }
 
-		 t = opj_clock();
+
 
         /* encode the destination image */
         /* ---------------------------- */
@@ -1848,7 +1848,7 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-		t = opj_clock() - t;
+		num_encoded_images++;
 
         fprintf(stdout,"[INFO] Generated outfile %s\n",parameters.outfile);
         /* close and free the byte stream */
@@ -1860,8 +1860,6 @@ int main(int argc, char **argv) {
         /* free image data */
         opj_image_destroy(image);
 
-		fprintf(stdout, "encode time: %d ms \n", (int)(t * 1000));
-		scanf("%d");
 
     }
 
@@ -1869,6 +1867,10 @@ int main(int argc, char **argv) {
     if(parameters.cp_comment)   free(parameters.cp_comment);
     if(parameters.cp_matrice)   free(parameters.cp_matrice);
     if(raw_cp.rawComps) free(raw_cp.rawComps);
+	
+	t = opj_clock() - t;
+	fprintf(stdout, "encode time: %d ms \n", (int)((t * 1000) / num_encoded_images));
+	scanf("%d");
 
     return 0;
 }
