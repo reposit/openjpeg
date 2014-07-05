@@ -581,6 +581,7 @@ typedef struct opj_j2k
 
 	opj_tcd_tile_info_t*  tcdTileInfo;
 	OPJ_UINT32  numTiles;
+
 }
 opj_j2k_t;
 

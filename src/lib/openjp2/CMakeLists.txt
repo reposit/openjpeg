@@ -1,4 +1,4 @@
-include_regular_expression("^.*$")
+﻿include_regular_expression("^.*$")
 
 #
 install( FILES  ${CMAKE_CURRENT_BINARY_DIR}/opj_config.h
@@ -6,6 +6,7 @@ install( FILES  ${CMAKE_CURRENT_BINARY_DIR}/opj_config.h
 
 include_directories(
   ${OPENJPEG_BINARY_DIR}/src/lib/openjp2 # opj_config.h and opj_config_private.h
+  ${OPENCL_INCLUDE_DIR}
 )
 # Defines the source code for the library
 set(OPENJPEG_SRCS
@@ -28,6 +29,19 @@ set(OPENJPEG_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/tcd.c
   ${CMAKE_CURRENT_SOURCE_DIR}/tgt.c
   ${CMAKE_CURRENT_SOURCE_DIR}/function_list.c
+    
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLBasic.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLQueue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLKernel.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLUtil.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ocl_platform.cl
+  ${CMAKE_CURRENT_SOURCE_DIR}/ocl_preprocessor.cl
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLInterface.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLPreprocessor.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLPreprocessorEncode.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLDeviceManager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLMemoryManager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/OCLEncoder.cpp
 )
 if(BUILD_JPIP)
   add_definitions(-DUSE_JPIP)
@@ -50,6 +64,7 @@ if(WIN32)
   endif()
 endif()
 add_library(${OPENJPEG_LIBRARY_NAME} ${OPENJPEG_SRCS})
+target_link_libraries(${OPENJPEG_LIBRARY_NAME} ${OPENCL_LIBRARY})
 if(UNIX)
   target_link_libraries(${OPENJPEG_LIBRARY_NAME} m)
 endif()

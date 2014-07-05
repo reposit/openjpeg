@@ -41,6 +41,7 @@
  */
 
 #include "opj_includes.h"
+#include "OCLInterface.h"
 
 /** @defgroup J2K J2K - JPEG-2000 codestream reader/writer */
 /*@{*/
@@ -5897,6 +5898,10 @@ opj_j2k_t* opj_j2k_create_compress(void)
                 return NULL;
         }
 
+		if (ocl_createDeviceManager() ) {
+			ocl_initializeDeviceManager();
+			ocl_createEncoder();
+		}
         return l_j2k;
 }
 
@@ -7397,8 +7402,10 @@ void opj_j2k_destroy (opj_j2k_t *p_j2k)
 			opj_free(p_j2k->tcdTileInfo);
 			p_j2k->tcdTileInfo = 00;
 		}
-			
-        opj_free(p_j2k);
+
+		ocl_cleanup();
+
+	    opj_free(p_j2k);
 }
 
 void j2k_destroy_cstr_index (opj_codestream_index_t *p_cstr_ind)

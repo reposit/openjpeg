@@ -60,7 +60,7 @@ Apply a reversible multi-component transform to an image
 @param c2 Samples blue component
 @param n Number of samples for each component
 */
-void opj_mct_encode(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 n);
+void opj_mct_encode(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 w, OPJ_UINT32 h);
 /**
 Apply a reversible multi-component transform to an image, and also apply dc level shift
 @param c0 Samples for red component
@@ -69,7 +69,7 @@ Apply a reversible multi-component transform to an image, and also apply dc leve
 @param n Number of samples for each component
 @param shift dc level shift
 */
-void opj_mct_encode_with_dcshift(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 n, OPJ_UINT32 shift);
+void opj_mct_encode_with_dcshift(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 w, OPJ_UINT32 h, OPJ_UINT32 shift);
 /**
 Apply a reversible multi-component inverse transform to an image
 @param c0 Samples for luminance component
@@ -92,7 +92,7 @@ Apply an irreversible multi-component transform to an image
 @param c2 Samples blue component
 @param n Number of samples for each component
 */
-void opj_mct_encode_real(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 n);
+void opj_mct_encode_real(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 w, OPJ_UINT32 h);
 /**
 Apply an irreversible multi-component transform to an image, and also apply dc shift
 @param c0 Samples for red component
@@ -100,7 +100,7 @@ Apply an irreversible multi-component transform to an image, and also apply dc s
 @param c2 Samples blue component
 @param n Number of samples for each component
 */
-void opj_mct_encode_real_with_dcshift(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 n, OPJ_UINT32 shift);
+void opj_mct_encode_real_with_dcshift(OPJ_INT32 *c0, OPJ_INT32 *c1, OPJ_INT32 *c2, OPJ_UINT32 w, OPJ_UINT32 h, OPJ_UINT32 shift);
 /**
 Apply an irreversible multi-component inverse transform to an image
 @param c0 Samples for luminance component

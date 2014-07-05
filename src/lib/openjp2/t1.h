@@ -60,14 +60,14 @@ typedef OPJ_INT16 opj_flag_t;
 #define T1_SIG_E 0x0020		/**< Context orientation : East direction */
 #define T1_SIG_S 0x0040		/**< Context orientation : South direction */
 #define T1_SIG_W 0x0080		/**< Context orientation : West direction */
-const opj_flag_t  T1_SIG_OTH;
-const opj_flag_t  T1_SIG_PRIM ;
+extern const opj_flag_t  T1_SIG_OTH;
+extern const opj_flag_t  T1_SIG_PRIM ;
 
 #define T1_SGN_N 0x0100
 #define T1_SGN_E 0x0200
 #define T1_SGN_S 0x0400
 #define T1_SGN_W 0x0800
-const opj_flag_t T1_SGN;
+static const opj_flag_t T1_SGN;
 
 #define T1_SIG 0x1000
 #define T1_REFINE 0x2000
@@ -80,13 +80,12 @@ const opj_flag_t T1_SGN;
 #define T1_NUMCTXS_UNI 1
 
 #define T1_CTXNO_ZC 0
-const OPJ_UINT32  T1_CTXNO_SC;
-const OPJ_UINT32 T1_CTXNO_MAG ;
-const OPJ_UINT32 T1_CTXNO_AGG;
-const OPJ_UINT32 T1_CTXNO_UNI;
-const OPJ_UINT32 T1_NUMCTXS;
-
-const OPJ_UINT32 T1_NMSEDEC_FRACBITS;
+static const OPJ_UINT32  T1_CTXNO_SC;
+static const OPJ_UINT32 T1_CTXNO_MAG ;
+static const OPJ_UINT32 T1_CTXNO_AGG;
+static const OPJ_UINT32 T1_CTXNO_UNI;
+static const OPJ_UINT32 T1_NUMCTXS;
+static const OPJ_UINT32 T1_NMSEDEC_FRACBITS;
 
 #define T1_TYPE_MQ 0	/**< Normal coding using entropy coder */
 #define T1_TYPE_RAW 1	/**< No encoding the information is store under raw format in codestream (mode switch RAW)*/

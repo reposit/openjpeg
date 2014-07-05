@@ -39,6 +39,7 @@
  */
 
 #include "opj_includes.h"
+#include "OCLInterface.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -1892,7 +1893,7 @@ OPJ_UINT32 opj_tcd_get_encoded_tile_size ( opj_tcd_t *p_tcd )
  *
  *
  * Note: for lossy encoding, this method will convert the data into fixed
- * point at 13 bits fraction precision
+ * point at 11 bits fraction precision
  */
 OPJ_BOOL opj_tcd_dc_level_shift_encode ( opj_tcd_t *p_tcd )
 {
@@ -1901,7 +1902,7 @@ OPJ_BOOL opj_tcd_dc_level_shift_encode ( opj_tcd_t *p_tcd )
         opj_tccp_t * l_tccp = 00;
         opj_image_comp_t * l_img_comp = 00;
         opj_tcd_tile_t * l_tile;
-        OPJ_UINT32 l_nb_elem,i;
+        OPJ_UINT32 w,h,i;
         OPJ_INT32 * l_current_ptr;
 
         l_tile = p_tcd->tcd_image->tiles;
@@ -1911,21 +1912,24 @@ OPJ_BOOL opj_tcd_dc_level_shift_encode ( opj_tcd_t *p_tcd )
 
         for (compno = 0; compno < l_tile->numcomps; compno++) {
                 l_current_ptr = l_tile_comp->data;
-                l_nb_elem = (OPJ_UINT32)((l_tile_comp->x1 - l_tile_comp->x0) * (l_tile_comp->y1 - l_tile_comp->y0));
+                w = (OPJ_UINT32)(l_tile_comp->x1 - l_tile_comp->x0 );
+				h = (OPJ_UINT32) (l_tile_comp->y1 - l_tile_comp->y0);
+				ocl_encode_preprocess(l_tccp->qmfbid == 0, l_current_ptr, NULL,NULL,w,h, l_tccp->m_dc_level_shift);
 
+				/*
                 if (l_tccp->qmfbid == 1) {
-                        for     (i = 0; i < l_nb_elem; ++i) {
+                        for     (i = 0; i < w*h; ++i) {
                                 *l_current_ptr -= l_tccp->m_dc_level_shift ;
                                 ++l_current_ptr;
                         }
                 }
                 else {
-                        for (i = 0; i < l_nb_elem; ++i) {
+                        for (i = 0; i < w*h; ++i) {
                                 *l_current_ptr = (*l_current_ptr - l_tccp->m_dc_level_shift) << DWT_LOSSY_FP_PRECISION ;
                                 ++l_current_ptr;
                         }
                 }
-
+				*/
                 ++l_img_comp;
                 ++l_tccp;
                 ++l_tile_comp;
@@ -1938,7 +1942,9 @@ OPJ_BOOL opj_tcd_mct_encode ( opj_tcd_t *p_tcd )
 {
         opj_tcd_tile_t * l_tile = p_tcd->tcd_image->tiles;
         opj_tcd_tilecomp_t * l_tile_comp = p_tcd->tcd_image->tiles->comps;
-        OPJ_UINT32 samples = (OPJ_UINT32)((l_tile_comp->x1 - l_tile_comp->x0) * (l_tile_comp->y1 - l_tile_comp->y0));
+		OPJ_UINT32 w = (OPJ_UINT32)(l_tile_comp->x1 - l_tile_comp->x0);
+		OPJ_UINT32 h = (OPJ_UINT32)(l_tile_comp->y1 - l_tile_comp->y0);
+        OPJ_UINT32 samples = w*h;
         OPJ_UINT32 i;
         OPJ_BYTE ** l_data = 00;
         opj_tcp_t * l_tcp = p_tcd->tcp;
@@ -1981,16 +1987,16 @@ OPJ_BOOL opj_tcd_mct_encode ( opj_tcd_t *p_tcd )
         }
         else if (l_tcp->tccps->qmfbid == 0) {
 			if (p_tcd->tcp->tccps->m_dc_level_shift == 0)
-				opj_mct_encode_real(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, samples);
+				opj_mct_encode_real(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, w,h);
 			else
-				opj_mct_encode_real_with_dcshift(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, samples,p_tcd->tcp->tccps->m_dc_level_shift);
+				opj_mct_encode_real_with_dcshift(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, w,h,p_tcd->tcp->tccps->m_dc_level_shift);
 
         }
         else {
 			if (p_tcd->tcp->tccps->m_dc_level_shift == 0)
-				opj_mct_encode(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, samples);
+				opj_mct_encode(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, w,h);
 			else
-				opj_mct_encode_with_dcshift(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, samples,p_tcd->tcp->tccps->m_dc_level_shift);
+				opj_mct_encode_with_dcshift(l_tile->comps[0].data, l_tile->comps[1].data, l_tile->comps[2].data, w,h,p_tcd->tcp->tccps->m_dc_level_shift);
         }
 
         return OPJ_TRUE;

@@ -42,7 +42,7 @@
 #endif
 
 #include "opj_includes.h"
-
+#include "OCLInterface.h"
 /* <summary> */
 /* This table contains the norms of the basis function of the reversible MCT. */
 /* </summary> */
@@ -70,10 +70,13 @@ void opj_mct_encode(
 		OPJ_INT32* restrict c0,
 		OPJ_INT32* restrict c1,
 		OPJ_INT32* restrict c2,
-		OPJ_UINT32 n)
+		OPJ_UINT32 w, OPJ_UINT32 h)
 {
 	OPJ_UINT32 i;
-	for(i = 0; i < n; ++i) {
+	
+	ocl_encode_preprocess(0, c0,c1,c2,w,h,0);
+	/*
+	for(i = 0; i < w*h; ++i) {
 		OPJ_INT32 r = c0[i];
 		OPJ_INT32 g = c1[i];
 		OPJ_INT32 b = c2[i];
@@ -83,7 +86,7 @@ void opj_mct_encode(
 		c0[i] = y;
 		c1[i] = u;
 		c2[i] = v;
-	}
+	}*/
 }
 /* <summary> */
 /* Foward reversible MCT with dc level shift */
@@ -92,11 +95,14 @@ void opj_mct_encode_with_dcshift(
 		OPJ_INT32* restrict c0,
 		OPJ_INT32* restrict c1,
 		OPJ_INT32* restrict c2,
-		OPJ_UINT32 n,
+		OPJ_UINT32 w, OPJ_UINT32 h,
 		OPJ_UINT32 shift)
 {
 	OPJ_UINT32 i;
-	for(i = 0; i < n; ++i) {
+
+	ocl_encode_preprocess(0,c0,c1,c2,w,h,shift);
+	/*
+	for(i = 0; i < w*h; ++i) {
 		OPJ_INT32 r = c0[i] ;
 		OPJ_INT32 g = c1[i];
 		OPJ_INT32 b = c2[i];
@@ -106,7 +112,7 @@ void opj_mct_encode_with_dcshift(
 		c0[i] = y;
 		c1[i] = u;
 		c2[i] = v;
-	}
+	}*/
 }
 
 /* <summary> */
@@ -146,10 +152,13 @@ void opj_mct_encode_real(
 		OPJ_INT32* restrict c0,
 		OPJ_INT32* restrict c1,
 		OPJ_INT32* restrict c2,
-		OPJ_UINT32 n)
+		OPJ_UINT32 w, OPJ_UINT32 h)
 {
 	OPJ_UINT32 i;
-	for(i = 0; i < n; ++i) {
+
+	ocl_encode_preprocess(1, c0,c1,c2,w,h,0);
+	/*
+	for(i = 0; i < w*h; ++i) {
 		OPJ_INT32 r = c0[i] << DWT_LOSSY_FP_PRECISION;
 		OPJ_INT32 g = c1[i] << DWT_LOSSY_FP_PRECISION;
 		OPJ_INT32 b = c2[i] << DWT_LOSSY_FP_PRECISION;
@@ -159,7 +168,7 @@ void opj_mct_encode_real(
 		c0[i] = y;
 		c1[i] = u;
 		c2[i] = v;
-	}
+	}*/
 }
 
 /* <summary> */
@@ -169,11 +178,13 @@ void opj_mct_encode_real_with_dcshift(
 		OPJ_INT32* restrict c0,
 		OPJ_INT32* restrict c1,
 		OPJ_INT32* restrict c2,
-		OPJ_UINT32 n,
+		OPJ_UINT32 w, OPJ_UINT32 h,
 		OPJ_UINT32 shift)
 {
 	OPJ_UINT32 i;
-	for(i = 0; i < n; ++i) {
+	ocl_encode_preprocess(1, c0,c1,c2,w,h,shift);
+	/*
+	for(i = 0; i < w*h; ++i) {
 		OPJ_INT32 r = (c0[i] - shift) << DWT_LOSSY_FP_PRECISION;
 		OPJ_INT32 g = (c1[i] - shift) << DWT_LOSSY_FP_PRECISION;
 		OPJ_INT32 b = (c2[i] - shift) << DWT_LOSSY_FP_PRECISION;
@@ -183,7 +194,7 @@ void opj_mct_encode_real_with_dcshift(
 		c0[i] = y;
 		c1[i] = u;
 		c2[i] = v;
-	}
+	}*/
 }
 
 

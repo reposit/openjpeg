@@ -21,7 +21,7 @@ endif()
 #string(TOLOWER ${OPENJPEG_NAMESPACE} OPENJPEG_LIBRARY_NAME)
 set(OPENJPEG_LIBRARY_NAME openjp2)
 
-project(${OPENJPEG_NAMESPACE} C)
+project(${OPENJPEG_NAMESPACE})
 
 # Do full dependency headers.
 include_regular_expression("^.*$")
@@ -320,6 +320,7 @@ install(FILES LICENSE DESTINATION ${OPENJPEG_INSTALL_DOC_DIR})
 endif()
 
 include (cmake/OpenJPEGCPack.cmake)
+include (cmake/FindOpenCL.cmake)
 
 #-----------------------------------------------------------------------------
 # pkgconfig support
