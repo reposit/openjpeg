@@ -1317,7 +1317,7 @@ static void t1_decode_cblk(
 		opj_tcd_seg_t *seg = &cblk->segs[segno];
 		
 		/* BYPASS mode */
-		type = ((bpno <= (cblk->numbps - 1) - 4) && (passtype < 2) && (cblksty & J2K_CCP_CBLKSTY_LAZY)) ? T1_TYPE_RAW : T1_TYPE_MQ;
+		type = ((cblksty & J2K_CCP_CBLKSTY_LAZY) && (bpno <= (cblk->numbps - 1) - 4) && (passtype < 2) ) ? T1_TYPE_RAW : T1_TYPE_MQ;
 		/* FIXME: slviewer gets here with a null pointer. Why? Partially downloaded and/or corrupt textures? */
 		if(seg->data == NULL){
 			continue;
