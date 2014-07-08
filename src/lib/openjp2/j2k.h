@@ -72,7 +72,7 @@ The functions in J2K.C have for goal to read/write the several parts of the code
                                               // so this value equals half maximum code block size
 
 #define OPJ_J2K_DEFAULT_CBLK_DATA_SIZE_ENCODE (8192*2)   // Note: maximum code block dimensions are 64 x 64
-                                              // so this value equals half maximum code block size
+                                              // so this value equals maximum code block size
 
 /* ----------------------------------------------------------------------- */
 

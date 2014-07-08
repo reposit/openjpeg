@@ -164,6 +164,9 @@ typedef struct opj_tcd_tilecomp
 	opj_tcd_resolution_t *resolutions;	/* resolutions information */
 	OPJ_UINT32 resolutions_size;			/* size of data for resolutions (in bytes) */
 	OPJ_INT32 *data;						/* data of the component */
+	OPJ_BOOL  ownsData;                     // if true, then need to free after usage, otherwise do not free
+	OPJ_UINT32 data_size_needed;            // we may either need to allocate this amount of data, or re-use
+	                                        // image data and ignore this value
 	OPJ_UINT32 data_size;					/* size of the data of the component */
 	OPJ_INT32 numpix;						/* add fixed_quality */
 } opj_tcd_tilecomp_t;
@@ -350,6 +353,13 @@ OPJ_BOOL opj_tcd_init_encode_tile (	opj_tcd_t *p_tcd,
 OPJ_BOOL opj_tcd_copy_tile_data (opj_tcd_t *p_tcd,
                                  OPJ_BYTE * p_src,
                                  OPJ_UINT32 p_src_length );
+
+/**
+ * Allocates tile component data
+ *
+ *
+ */
+OPJ_BOOL opj_alloc_tile_component_data(opj_tcd_tilecomp_t *l_tilec);
 
 /* ----------------------------------------------------------------------- */
 /*@}*/
