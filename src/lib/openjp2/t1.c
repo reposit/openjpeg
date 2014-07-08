@@ -1555,8 +1555,7 @@ OPJ_BOOL opj_t1_decode_cblk(opj_t1_t *t1,
 
 
 
-OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
-                                opj_tcd_tile_t *tile,
+OPJ_BOOL opj_t1_encode_cblks(   opj_tcd_tile_t *tile,
                                 opj_tcp_t *tcp,
                                 const OPJ_FLOAT64 * mct_norms
                                 )
@@ -1587,7 +1586,7 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 						OPJ_UINT32 cblk_h;
 						OPJ_UINT32 i, j, tileIndex=0, tileLineAdvance;
 						OPJ_INT32 max = 0;
-
+						opj_t1_t * t1 = opj_t1_create();
 						OPJ_INT32 x = cblk->x0 - band->x0;
 						OPJ_INT32 y = cblk->y0 - band->y0;
 						if (band->bandno & 1) {
@@ -1598,6 +1597,11 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 							opj_tcd_resolution_t *pres = &tilec->resolutions[resno - 1];
 							y += pres->y1 - pres->y0;
 						}
+
+						if (t1 == 00) {
+				              return OPJ_FALSE;
+				        }
+				        t1->encoder = OPJ_TRUE;
 
 						if(!opj_t1_allocate_buffers(
 									t1,
@@ -1651,6 +1655,7 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_t1_t *t1,
 								tile,
 								mct_norms,
 								max);
+						opj_t1_destroy(t1);
 
 					} /* cblkno */
 				} /* precno */
