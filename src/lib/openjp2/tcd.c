@@ -620,11 +620,11 @@ OPJ_BOOL opj_allocate_enc_codeblock_memory( opj_tcd_tile_t * l_tile, OPJ_UINT32 
 	OPJ_UINT32 l_cblckOffset = 0;
     // instead of re-allocing, we simply free the data and allocate a new contiguous block
     if ( l_tile->compressedData&& (compressedSize > l_tile->compressedDataSize)) {
-        opj_free(l_tile->compressedData);
+        	opj_aligned_free(l_tile->compressedData);
         l_tile->compressedData = NULL;
     }
     if (!l_tile->compressedData) {
-        l_tile->compressedData = (OPJ_BYTE*)opj_malloc(compressedSize);
+        	l_tile->compressedData = (OPJ_BYTE*)opj_aligned_malloc(compressedSize);
 		if (!l_tile->compressedData)
 			return OPJ_FALSE;
 		l_tile->compressedDataSize = compressedSize;
@@ -1510,7 +1510,7 @@ void opj_tcd_free_tile(opj_tcd_t *p_tcd)
         opj_free(l_tile->comps);
         l_tile->comps = 00;
         if (p_tcd->tcd_image->tiles->compressedData)
-        	opj_free(p_tcd->tcd_image->tiles->compressedData);
+        	opj_aligned_free(p_tcd->tcd_image->tiles->compressedData);
         p_tcd->tcd_image->tiles->compressedData = 00;
         opj_free(p_tcd->tcd_image->tiles);
         p_tcd->tcd_image->tiles = 00;
