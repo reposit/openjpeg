@@ -337,7 +337,7 @@ OPJ_BOOL opj_tcd_update_tile_data (	opj_tcd_t *p_tcd,
 OPJ_UINT32 opj_tcd_get_encoded_tile_size ( opj_tcd_t *p_tcd );
 
 /**
- * Initialize the tile coder and may reuse some meory.
+ * Initialize the tile coder and may reuse some memory.
  *
  * @param	p_tcd		TCD handle.
  * @param	p_tile_no	current tile index to encode.

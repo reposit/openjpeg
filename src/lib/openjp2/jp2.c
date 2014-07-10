@@ -1596,23 +1596,27 @@ void opj_jp2_setup_encoder(	opj_jp2_t *jp2,
 	jp2->brand = JP2_JP2;	/* BR */
 	jp2->minversion = 0;	/* MinV */
 	jp2->numcl = 1;
-	jp2->cl = (OPJ_UINT32*) opj_malloc(jp2->numcl * sizeof(OPJ_UINT32));
-    if (!jp2->cl){
-        jp2->cl = NULL;
-        opj_event_msg(p_manager, EVT_ERROR, "Not enough memory when setup the JP2 encoder\n");
-        return;
-    }
+	if (!jp2->cl) {
+		jp2->cl = (OPJ_UINT32*) opj_malloc(jp2->numcl * sizeof(OPJ_UINT32));
+		if (!jp2->cl){
+			jp2->cl = NULL;
+			opj_event_msg(p_manager, EVT_ERROR, "Not enough memory when setup the JP2 encoder\n");
+			return;
+		}
+	}
 	jp2->cl[0] = JP2_JP2;	/* CL0 : JP2 */
 
 	/* Image Header box */
 
 	jp2->numcomps = image->numcomps;	/* NC */
-	jp2->comps = (opj_jp2_comps_t*) opj_malloc(jp2->numcomps * sizeof(opj_jp2_comps_t));
-    if (!jp2->comps) {
-        jp2->comps = NULL;
-        opj_event_msg(p_manager, EVT_ERROR, "Not enough memory when setup the JP2 encoder\n");
-        return;
-    }
+	if (!jp2->comps) {
+		jp2->comps = (opj_jp2_comps_t*) opj_malloc(jp2->numcomps * sizeof(opj_jp2_comps_t));
+		if (!jp2->comps) {
+			jp2->comps = NULL;
+			opj_event_msg(p_manager, EVT_ERROR, "Not enough memory when setup the JP2 encoder\n");
+			return;
+		}
+	}
 
 	jp2->h = image->y1 - image->y0;		/* HEIGHT */
 	jp2->w = image->x1 - image->x0;		/* WIDTH */

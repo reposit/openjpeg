@@ -6128,6 +6128,8 @@ void opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
         if(!p_j2k || !parameters || ! image) {
                 return;
         }
+		//reset current tile number
+		p_j2k->m_current_tile_number = 0;
 
         /* keep a link to cp so that we can destroy it later in j2k_destroy_compress */
         cp = &(p_j2k->m_cp);
@@ -9975,7 +9977,9 @@ void opj_j2k_setup_end_compress (opj_j2k_t *p_j2k)
 
         opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_write_epc );
         opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_end_encoding );
-        opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_destroy_header_memory);
+
+		// header memory will be destroyed when j2k object is destroyed, so wait until then
+        //opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_destroy_header_memory);
 }
 
 void opj_j2k_setup_encoding_validation (opj_j2k_t *p_j2k)
