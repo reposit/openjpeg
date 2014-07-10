@@ -172,12 +172,16 @@ typedef struct opj_tcd_tilecomp
 } opj_tcd_tilecomp_t;
 
 
+typedef struct opj_tcd_tile_info {
+	OPJ_BYTE* compressedData;
+	OPJ_UINT32 compressedDataSize;
+	OPJ_UINT32 numCodeBlocks;
+} opj_tcd_tile_info_t;
+
 /**
 FIXME DOC
 */
 typedef struct opj_tcd_tile {
-	OPJ_BYTE* compressedData;
-	OPJ_UINT32 compressedDataSize;
 	OPJ_INT32 x0, y0, x1, y1;		/* dimension of the tile : left upper corner (x0, y0) right low corner (x1,y1) */
 	OPJ_UINT32 numcomps;			/* number of components in tile */
 	opj_tcd_tilecomp_t *comps;	/* Components information */
@@ -269,7 +273,8 @@ OPJ_BOOL opj_tcd_init(	opj_tcd_t *p_tcd,
  *
  * @return	true if the remaining data is sufficient.
  */
-OPJ_BOOL opj_tcd_init_decode_tile(opj_tcd_t *p_tcd, OPJ_UINT32 p_tile_no);
+OPJ_BOOL opj_tcd_init_decode_tile(opj_tcd_t *p_tcd, OPJ_UINT32 p_tile_no,
+									opj_tcd_tile_info_t* tileInfo);
 
 void opj_tcd_makelayer_fixed(opj_tcd_t *tcd, OPJ_UINT32 layno, OPJ_UINT32 final);
 
@@ -345,7 +350,8 @@ OPJ_UINT32 opj_tcd_get_encoded_tile_size ( opj_tcd_t *p_tcd );
  * @return true if the encoding values could be set (false otherwise).
 */
 OPJ_BOOL opj_tcd_init_encode_tile (	opj_tcd_t *p_tcd,
-								    OPJ_UINT32 p_tile_no );
+								    OPJ_UINT32 p_tile_no,
+									opj_tcd_tile_info_t* tileInfo);
 
 /**
  * Copies tile data from the given memory block onto the system.

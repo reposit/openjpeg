@@ -7386,6 +7386,18 @@ void opj_j2k_destroy (opj_j2k_t *p_j2k)
         opj_image_destroy(p_j2k->m_output_image);
         p_j2k->m_output_image = NULL;
 
+		if (p_j2k->tcdTileInfo) {
+			OPJ_UINT32 i;
+			for (i = 0; i < p_j2k->numTiles; ++i) {
+				opj_tcd_tile_info_t* info = p_j2k->tcdTileInfo + i;
+				 if (info->compressedData)
+        			opj_aligned_free(info->compressedData);
+				info->compressedData = 00;
+			}
+			opj_free(p_j2k->tcdTileInfo);
+			p_j2k->tcdTileInfo = 00;
+		}
+			
         opj_free(p_j2k);
 }
 
@@ -7736,7 +7748,7 @@ OPJ_BOOL opj_j2k_read_tile_header(      opj_j2k_t * p_j2k,
         }
 
         /*FIXME ???*/
-        if (! opj_tcd_init_decode_tile(p_j2k->m_tcd, p_j2k->m_current_tile_number)) {
+		if (! opj_tcd_init_decode_tile(p_j2k->m_tcd, p_j2k->m_current_tile_number, p_j2k->tcdTileInfo + p_j2k->m_current_tile_number )) {
                 opj_event_msg(p_manager, EVT_ERROR, "Cannot decode tile, memory error\n");
                 return OPJ_FALSE;
         }
@@ -9652,6 +9664,11 @@ OPJ_BOOL opj_j2k_encode(opj_j2k_t * p_j2k,
         assert(p_manager != 00);
 
         l_nb_tiles = p_j2k->m_cp.th * p_j2k->m_cp.tw;
+		if (!p_j2k->tcdTileInfo) {
+			p_j2k->tcdTileInfo = (opj_tcd_tile_info_t*)opj_calloc(l_nb_tiles, sizeof(opj_tcd_tile_info_t));
+		}
+		p_j2k->numTiles = l_nb_tiles;
+
         for (i=0;i<l_nb_tiles;++i) {
                 if (! opj_j2k_pre_write_tile(p_j2k,i,p_stream,p_manager)) {
                         opj_free(l_current_data);
@@ -9786,7 +9803,7 @@ OPJ_BOOL opj_j2k_pre_write_tile (       opj_j2k_t * p_j2k,
         p_j2k->m_specific_param.m_encoder.m_current_poc_tile_part_number = 0;
 
         /* initialisation before tile encoding  */
-        if (! opj_tcd_init_encode_tile(p_j2k->m_tcd, p_j2k->m_current_tile_number)) {
+		if (! opj_tcd_init_encode_tile(p_j2k->m_tcd, p_j2k->m_current_tile_number, p_j2k->tcdTileInfo + p_j2k->m_current_tile_number)) {
                 return OPJ_FALSE;
         }
 
