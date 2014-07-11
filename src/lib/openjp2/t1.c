@@ -345,7 +345,127 @@ static OPJ_BOOL opj_t1_decode_cblk( opj_t1_t *t1,
 OPJ_BOOL opj_t1_allocate_buffers(   opj_t1_t *t1,
                                     OPJ_UINT32 w,
                                     OPJ_UINT32 h);
+///////////////////////////////////////////////////////////////////////////
+// Fast Encode Paths
 
+
+/**
+Encode significance pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+*/
+static void opj_t1_enc_sigpass_step_fast(opj_t1_t *t1,
+                                    opj_flag_t *flagsp,
+                                    OPJ_INT32 *datap,
+                                    OPJ_UINT32 orient,
+                                    OPJ_INT32 bpno,
+                                    OPJ_INT32 one,
+                                    OPJ_INT32 *nmsedec);
+
+
+/**
+Encode significance pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+*/
+static void opj_t1_enc_sigpass_fast( opj_t1_t *t1,
+                                OPJ_INT32 bpno,
+                                OPJ_UINT32 orient,
+                                OPJ_INT32 *nmsedec);
+
+
+/**
+Encode refinement pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+
+*/
+static void opj_t1_enc_refpass_step_fast(opj_t1_t *t1,
+                                    opj_flag_t *flagsp,
+                                    OPJ_INT32 *datap,
+                                    OPJ_INT32 bpno,
+                                    OPJ_INT32 one,
+                                    OPJ_INT32 *nmsedec);
+
+
+/**
+Encode refinement pass
+
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+*/
+static void opj_t1_enc_refpass_fast( opj_t1_t *t1,
+                                OPJ_INT32 bpno,
+                                OPJ_INT32 *nmsedec);
+
+
+/**
+Encode clean-up pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param partial  ???
+*/
+static void opj_t1_enc_clnpass_step_fast(
+		opj_t1_t *t1,
+		opj_flag_t *flagsp,
+		OPJ_INT32 *datap,
+		OPJ_UINT32 orient,
+		OPJ_INT32 bpno,
+		OPJ_INT32 one,
+		OPJ_INT32 *nmsedec,
+		OPJ_UINT32 partial);
+
+/**
+Encode clean-up pass
+
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+*/
+static void opj_t1_enc_clnpass_fast(
+		opj_t1_t *t1,
+		OPJ_INT32 bpno,
+		OPJ_UINT32 orient,
+		OPJ_INT32 *nmsedec);
+
+
+static void opj_t1_encode_cblk_fast( opj_t1_t *t1,
+                                opj_tcd_cblk_enc_t* cblk,
+                                OPJ_UINT32 orient,
+                                OPJ_UINT32 compno,
+                                OPJ_UINT32 level,
+                                OPJ_UINT32 qmfbid,
+                                OPJ_FLOAT64 stepsize,
+                                OPJ_UINT32 numcomps,
+                                opj_tcd_tile_t * tile,
+                                const OPJ_FLOAT64 * mct_norms,
+                                OPJ_INT32 max);
+
+////////////////////////////////////////////////////////////////////////
 /*@}*/
 
 /*@}*/
@@ -1642,19 +1762,38 @@ OPJ_BOOL opj_t1_encode_cblks(   opj_tcd_tile_t *tile,
 							}
 						}
 
-						opj_t1_encode_cblk(
-								t1,
-								cblk,
-								band->bandno,
-								compno,
-								tilec->numresolutions - 1 - resno,
-								tccp->qmfbid,
-								band->stepsize,
-								tccp->cblksty,
-								tile->numcomps,
-								tile,
-								mct_norms,
-								max);
+						if (tccp->cblksty == 0) {
+							opj_t1_encode_cblk_fast(
+									t1,
+									cblk,
+									band->bandno,
+									compno,
+									tilec->numresolutions - 1 - resno,
+									tccp->qmfbid,
+									band->stepsize,
+									tile->numcomps,
+									tile,
+									mct_norms,
+									max);
+
+						} else {
+							opj_t1_encode_cblk(
+									t1,
+									cblk,
+									band->bandno,
+									compno,
+									tilec->numresolutions - 1 - resno,
+									tccp->qmfbid,
+									band->stepsize,
+									tccp->cblksty,
+									tile->numcomps,
+									tile,
+									mct_norms,
+									max);
+
+						}
+
+
 						opj_t1_destroy(t1);
 
 					} /* cblkno */
@@ -1815,3 +1954,350 @@ void opj_t1_encode_cblk(opj_t1_t *t1,
 	}
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Fast Encode Routines
+
+/**
+Encode significance pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+*/
+void opj_t1_enc_sigpass_step_fast(   opj_t1_t *t1,
+                                opj_flag_t *flagsp,
+                                OPJ_INT32 *datap,
+                                OPJ_UINT32 orient,
+                                OPJ_INT32 bpno,
+                                OPJ_INT32 one,
+                                OPJ_INT32 *nmsedec  )
+{
+	OPJ_INT32 v;
+    OPJ_UINT32 flag = (OPJ_UINT32)(*flagsp);
+	opj_mqc_t *mqc = t1->mqc;	
+		
+	if ((flag & T1_SIG_OTH) && !(flag & (T1_SIG | T1_VISIT))) {
+		v = opj_int_abs(*datap) & one ? 1 : 0;
+		opj_mqc_setcurctx(mqc, opj_t1_getctxno_zc(flag, orient));	/* ESSAI */
+
+		opj_mqc_encode(mqc, (OPJ_UINT32)v);
+		
+		if (v) {
+			v = *datap < 0 ? 1 : 0;
+			*nmsedec +=	opj_t1_getnmsedec_sig((OPJ_UINT32)opj_int_abs(*datap), (OPJ_UINT32)(bpno + T1_NMSEDEC_FRACBITS));
+			opj_mqc_setcurctx(mqc, opj_t1_getctxno_sc(flag));	/* ESSAI */
+			opj_mqc_encode(mqc, (OPJ_UINT32)(v ^ opj_t1_getspb((OPJ_UINT32)flag)));
+
+			opj_t1_updateflags(flagsp, (OPJ_UINT32)v, t1->flags_stride);
+		}
+		*flagsp |= T1_VISIT;
+	}
+}
+
+
+
+/**
+Encode significance pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+*/
+void opj_t1_enc_sigpass_fast(opj_t1_t *t1,
+                        OPJ_INT32 bpno,
+                        OPJ_UINT32 orient,
+                        OPJ_INT32 *nmsedec )
+{
+	OPJ_UINT32 i, j, k; 
+    OPJ_INT32 one;
+
+	*nmsedec = 0;
+	one = 1 << (bpno + T1_NMSEDEC_FRACBITS);
+	for (k = 0; k < t1->h; k += 4) {
+		for (i = 0; i < t1->w; ++i) {
+			for (j = k; j < k + 4 && j < t1->h; ++j) {
+				opj_t1_enc_sigpass_step_fast(
+						t1,
+						&t1->flags[((j+1) * t1->flags_stride) + i + 1],
+						&t1->data[(j * t1->data_stride) + i],
+						orient,
+						bpno,
+						one,
+						nmsedec);
+			}
+		}
+	}
+}
+
+
+/**
+Encode refinement pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+*/
+void opj_t1_enc_refpass_step_fast(   opj_t1_t *t1,
+                                opj_flag_t *flagsp,
+                                OPJ_INT32 *datap,
+                                OPJ_INT32 bpno,
+                                OPJ_INT32 one,
+                                OPJ_INT32 *nmsedec)
+{
+	OPJ_INT32 v;
+	OPJ_UINT32 flag = (OPJ_UINT32)(*flagsp);
+	
+	opj_mqc_t *mqc = t1->mqc;	/* MQC component */
+
+	if ((flag & (T1_SIG | T1_VISIT)) == T1_SIG) {
+		*nmsedec += opj_t1_getnmsedec_ref((OPJ_UINT32)opj_int_abs(*datap), (OPJ_UINT32)(bpno + T1_NMSEDEC_FRACBITS));
+		v = opj_int_abs(*datap) & one ? 1 : 0;
+		opj_mqc_setcurctx(mqc, opj_t1_getctxno_mag(flag));	/* ESSAI */
+		opj_mqc_encode(mqc, (OPJ_UINT32)v);
+		*flagsp |= T1_REFINE;
+	}
+}
+
+/**
+Encode refinement pass
+
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+*/
+void opj_t1_enc_refpass_fast(
+		opj_t1_t *t1,
+		OPJ_INT32 bpno,
+		OPJ_INT32 *nmsedec)
+{
+	OPJ_UINT32 i, j, k;
+    OPJ_INT32 one;
+
+	*nmsedec = 0;
+	one = 1 << (bpno + T1_NMSEDEC_FRACBITS);
+	for (k = 0; k < t1->h; k += 4) {
+		for (i = 0; i < t1->w; ++i) {
+			for (j = k; j < k + 4 && j < t1->h; ++j) {
+				opj_t1_enc_refpass_step_fast(
+						t1,
+						&t1->flags[((j+1) * t1->flags_stride) + i + 1],
+						&t1->data[(j * t1->data_stride) + i],
+						bpno,
+						one,
+						nmsedec);
+			}
+		}
+	}
+}
+
+/**
+Encode clean-up pass step
+
+@param t1		pointer to t1 struct
+@param flagsp	pointer to state flags array
+@param datap	pointer to data
+@param orient   sub-band orientation: LL, LH, HL, HH
+@param bpno		bit plane number
+@param one      fixed-point one for this bit plane
+@param nmsedec  ???
+@param partial  ???
+*/
+void opj_t1_enc_clnpass_step_fast(
+		opj_t1_t *t1,
+		opj_flag_t *flagsp,
+		OPJ_INT32 *datap,
+		OPJ_UINT32 orient,
+		OPJ_INT32 bpno,
+		OPJ_INT32 one,
+		OPJ_INT32 *nmsedec,
+		OPJ_UINT32 partial)
+{
+	OPJ_INT32 v;
+	OPJ_UINT32 flag = (OPJ_UINT32)(*flagsp);
+	
+	opj_mqc_t *mqc = t1->mqc;
+
+	if (partial) {
+		goto LABEL_PARTIAL;
+	}
+	if (!(*flagsp & (T1_SIG | T1_VISIT))) {
+		opj_mqc_setcurctx(mqc, opj_t1_getctxno_zc(flag, orient));
+		v = opj_int_abs(*datap) & one ? 1 : 0;
+		opj_mqc_encode(mqc, (OPJ_UINT32)v);
+		if (v) {
+LABEL_PARTIAL:
+			*nmsedec += opj_t1_getnmsedec_sig((OPJ_UINT32)opj_int_abs(*datap), (OPJ_UINT32)(bpno + T1_NMSEDEC_FRACBITS));
+			opj_mqc_setcurctx(mqc, opj_t1_getctxno_sc(flag));
+			v = *datap < 0 ? 1 : 0;
+			opj_mqc_encode(mqc, (OPJ_UINT32)(v ^ opj_t1_getspb((OPJ_UINT32)flag)));
+			opj_t1_updateflags(flagsp, (OPJ_UINT32)v, t1->flags_stride);
+		}
+	}
+	*flagsp &= ~T1_VISIT;
+}
+
+/**
+Encode clean-up pass
+
+@param t1		pointer to t1 struct
+@param bpno		bit plane number
+@param nmsedec  ???
+*/
+void opj_t1_enc_clnpass_fast(
+		opj_t1_t *t1,
+		OPJ_INT32 bpno,
+		OPJ_UINT32 orient,
+		OPJ_INT32 *nmsedec)
+{
+	OPJ_UINT32 i, j, k;
+	OPJ_INT32 one;
+	OPJ_UINT32 agg, runlen;
+	
+	opj_mqc_t *mqc = t1->mqc;	/* MQC component */
+	
+	*nmsedec = 0;
+	one = 1 << (bpno + T1_NMSEDEC_FRACBITS);
+	for (k = 0; k < t1->h; k += RLC_MAX) {
+		for (i = 0; i < t1->w; ++i) {
+			if (k + 3 < t1->h) {
+				agg = !(MACRO_t1_flags(1 + k,1 + i) & (T1_SIG | T1_VISIT | T1_SIG_OTH)
+					|| MACRO_t1_flags(1 + k + 1,1 + i) & (T1_SIG | T1_VISIT | T1_SIG_OTH)
+					|| MACRO_t1_flags(1 + k + 2,1 + i) & (T1_SIG | T1_VISIT | T1_SIG_OTH)
+					|| MACRO_t1_flags(1 + k + 3,1 + i) & (T1_SIG | T1_VISIT | T1_SIG_OTH));
+				
+			} else {
+				agg = 0;
+			}
+			if (agg) {
+				for (runlen = 0; runlen < RLC_MAX; ++runlen) {
+					if (opj_int_abs(t1->data[((k + runlen)*t1->data_stride) + i]) & one)
+						break;
+				}
+				opj_mqc_setcurctx(mqc, T1_CTXNO_AGG);
+				opj_mqc_encode(mqc, runlen != RLC_MAX);
+				if (runlen == RLC_MAX) {
+					continue;
+				}
+				opj_mqc_setcurctx(mqc, T1_CTXNO_UNI);
+				opj_mqc_encode(mqc, runlen >> 1);
+				opj_mqc_encode(mqc, runlen & 1);
+			} else {
+				runlen = 0;
+			}
+			for (j = k + runlen; j < k + RLC_MAX && j < t1->h; ++j) {
+				opj_t1_enc_clnpass_step_fast(
+						t1,
+						&t1->flags[((j+1) * t1->flags_stride) + i + 1],
+						&t1->data[(j * t1->data_stride) + i],
+						orient,
+						bpno,
+						one,
+						nmsedec,
+						agg && (j == k + runlen));
+			}
+		}
+	}
+}
+
+
+/** mod fixed_quality */
+/**
+Encode a code-block of a tile
+@param t1           t1 struct
+@param cblk 		code block to encode
+@param orient	    sub-band orientation: LL, LH, HL, HH
+@param compno		component number
+@param level		resolution level
+@param qmfbid		lossy or lossless
+@param stepsize
+@param numcomps		number of components
+@param tile			 The tile to encode
+@param mct_norms  	basis norms from MCT transform
+@param max          data max abs value
+*/
+void opj_t1_encode_cblk_fast(opj_t1_t *t1,
+                        opj_tcd_cblk_enc_t* cblk,
+                        OPJ_UINT32 orient,
+                        OPJ_UINT32 compno,
+                        OPJ_UINT32 level,
+                        OPJ_UINT32 qmfbid,
+                        OPJ_FLOAT64 stepsize,
+                        OPJ_UINT32 numcomps,
+                        opj_tcd_tile_t * tile,
+                        const OPJ_FLOAT64 * mct_norms,
+                        OPJ_INT32 max)
+{
+	OPJ_FLOAT64 cumwmsedec = 0.0;
+
+	opj_mqc_t *mqc = t1->mqc;	/* MQC component */
+
+	OPJ_UINT32 passno;
+	OPJ_INT32 bpno;
+	ePass passtype = CLEANUP;
+	OPJ_INT32 nmsedec = 0;
+	OPJ_FLOAT64 tempwmsedec;
+
+	cblk->numbps = max ? (OPJ_UINT32)((opj_int_floorlog2(max) + 1) - T1_NMSEDEC_FRACBITS) : 0;
+	bpno = (OPJ_INT32)(cblk->numbps - 1);
+
+
+	opj_mqc_resetstates(mqc);
+	opj_mqc_setstate(mqc, T1_CTXNO_UNI, 0, 46);
+	opj_mqc_setstate(mqc, T1_CTXNO_AGG, 0, 3);
+	opj_mqc_setstate(mqc, T1_CTXNO_ZC, 0, 4);
+	opj_mqc_init_enc(mqc, cblk->data);
+
+	for (passno = 0; bpno >= 0; ++passno) {
+		opj_tcd_pass_t *pass = cblk->passes + passno;
+		OPJ_UINT32 correction = 3;
+		switch (passtype) {
+			case SIGNIFICANCE:
+				opj_t1_enc_sigpass_fast(t1, bpno, orient, &nmsedec);
+				break;
+			case MAGNITUDE_REFINEMENT:
+				opj_t1_enc_refpass_fast(t1, bpno, &nmsedec);
+				break;
+			case CLEANUP:
+				opj_t1_enc_clnpass_fast(t1, bpno, orient, &nmsedec);
+				break;
+		}
+
+		/* fixed_quality */
+		tempwmsedec = opj_t1_getwmsedec(nmsedec, compno, level, orient, bpno, qmfbid, stepsize, numcomps,mct_norms) ;
+		cumwmsedec += tempwmsedec;
+		tile->distotile += tempwmsedec;
+		pass->term = 0;
+
+		if (++passtype == NUM_PASSES) {
+			passtype = SIGNIFICANCE;
+			bpno--;
+		}
+		pass->distortiondec = cumwmsedec;
+		pass->rate = opj_mqc_numbytes(mqc) + correction;	/* FIXME */
+	}
+
+	opj_mqc_flush(mqc);
+	cblk->totalpasses = passno;
+
+	for (passno = 0; passno<cblk->totalpasses; passno++) {
+		opj_tcd_pass_t *pass = cblk->passes + passno;
+		if (pass->rate > opj_mqc_numbytes(mqc))
+			pass->rate = opj_mqc_numbytes(mqc);
+		/*Preventing generation of FF as last data byte of a pass*/
+		if((pass->rate>1) && (cblk->data[pass->rate - 1] == 0xFF)){
+			pass->rate--;
+		}
+		pass->len = pass->rate - (passno == 0 ? 0 : cblk->passes[passno - 1].rate);
+	}
+}

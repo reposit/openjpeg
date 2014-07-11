@@ -7748,7 +7748,7 @@ OPJ_BOOL opj_j2k_read_tile_header(      opj_j2k_t * p_j2k,
         }
 
         /*FIXME ???*/
-		if (! opj_tcd_init_decode_tile(p_j2k->m_tcd, p_j2k->m_current_tile_number, p_j2k->tcdTileInfo + p_j2k->m_current_tile_number )) {
+		if (! opj_tcd_init_decode_tile(p_j2k->m_tcd, p_j2k->m_current_tile_number, NULL )) {
                 opj_event_msg(p_manager, EVT_ERROR, "Cannot decode tile, memory error\n");
                 return OPJ_FALSE;
         }
