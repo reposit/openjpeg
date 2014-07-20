@@ -1204,9 +1204,9 @@ OPJ_BOOL opj_tcd_encode_tile(   opj_tcd_t *p_tcd,
 
                 /* FIXME _ProfStart(PGROUP_DC_SHIFT); */
                 /*---------------TILE-------------------*/
-				// skip dc level shift for signed single component data, for example, or
+				// skip dc level shift for signed single component data, for example (where shift is zero), or
 				// if mct is standard transform (in which case we will do the shift in the mct transform
-				if (p_tcd->tcp->tccps->m_dc_level_shift != 0 && p_tcd->tcp->mct == 2 ) {
+				if (p_tcd->tcp->tccps->m_dc_level_shift != 0 && p_tcd->tcp->mct != 1 ) {
 					if (! opj_tcd_dc_level_shift_encode(p_tcd)) {
 							return OPJ_FALSE;
 					}
