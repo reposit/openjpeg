@@ -1633,6 +1633,33 @@ int main(int argc, char **argv) {
     }else{
         num_images=1;
     }
+
+	/* encode the destination image */
+    /* ---------------------------- */
+
+    switch(parameters.cod_format) {
+    case J2K_CFMT:	/* JPEG-2000 codestream */
+    {
+        /* Get a decoder handle */
+        l_codec = opj_create_compress(OPJ_CODEC_J2K);
+        break;
+    }
+    case JP2_CFMT:	/* JPEG 2000 compressed image data */
+    {
+        /* Get a decoder handle */
+        l_codec = opj_create_compress(OPJ_CODEC_JP2);
+        break;
+    }
+    default:
+		return 0;
+    }
+
+    /* catch events using our callbacks and give a local context */
+    opj_set_info_handler(l_codec, info_callback,00);
+    opj_set_warning_handler(l_codec, warning_callback,00);
+    opj_set_error_handler(l_codec, error_callback,00);
+
+
     /*Encoding image one by one*/
     for(imageno=0;imageno<num_images;imageno++)	{
         image = NULL;
@@ -1768,30 +1795,6 @@ int main(int argc, char **argv) {
         /* encode the destination image */
         /* ---------------------------- */
 
-        switch(parameters.cod_format) {
-        case J2K_CFMT:	/* JPEG-2000 codestream */
-        {
-            /* Get a decoder handle */
-            l_codec = opj_create_compress(OPJ_CODEC_J2K);
-            break;
-        }
-        case JP2_CFMT:	/* JPEG 2000 compressed image data */
-        {
-            /* Get a decoder handle */
-            l_codec = opj_create_compress(OPJ_CODEC_JP2);
-            break;
-        }
-        default:
-            fprintf(stderr, "skipping file..\n");
-            opj_stream_destroy(l_stream);
-            continue;
-        }
-
-        /* catch events using our callbacks and give a local context */
-        opj_set_info_handler(l_codec, info_callback,00);
-        opj_set_warning_handler(l_codec, warning_callback,00);
-        opj_set_error_handler(l_codec, error_callback,00);
-
         if( bUseTiles ) {
             parameters.cp_tx0 = 0;
             parameters.cp_ty0 = 0;
@@ -1851,21 +1854,35 @@ int main(int argc, char **argv) {
 
         fprintf(stdout,"[INFO] Generated outfile %s\n",parameters.outfile);
         /* close and free the byte stream */
-        opj_stream_destroy(l_stream);
-
-        /* free remaining compression structures */
-        opj_destroy_codec(l_codec);
+		if (l_stream)
+			opj_stream_destroy(l_stream);
+		l_stream = 00;
 
         /* free image data */
-        opj_image_destroy(image);
+		if (image)
+			opj_image_destroy(image);
+		image = 00;
 
 
     }
+
+
+	/* free remaining compression structures */
+	if (l_codec)
+		 opj_destroy_codec(l_codec);
 
     /* free user parameters structure */
     if(parameters.cp_comment)   free(parameters.cp_comment);
     if(parameters.cp_matrice)   free(parameters.cp_matrice);
     if(raw_cp.rawComps) free(raw_cp.rawComps);
+
+	if(dirptr){
+		if (dirptr->filename_buf)
+			free(dirptr->filename_buf);
+		if (dirptr->filename)
+			free(dirptr->filename);
+		free(dirptr);
+    }
 	
 	t = opj_clock() - t;
 	fprintf(stdout, "encode time: %d ms \n", (int)((t * 1000)/num_images));

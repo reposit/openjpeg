@@ -6179,6 +6179,9 @@ OPJ_BOOL opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
                 return OPJ_FALSE;
         }
 
+		//reset current tile number
+		p_j2k->m_current_tile_number = 0;
+
         if ((parameters->numresolution <= 0) || (parameters->numresolution > OPJ_J2K_MAXRLVLS)) {
             opj_event_msg(p_manager, EVT_ERROR, "Invalid number of resolutions : %d not in range [1,%d]\n", parameters->numresolution, OPJ_J2K_MAXRLVLS);
             return OPJ_FALSE;
@@ -7464,6 +7467,7 @@ void opj_j2k_destroy (opj_j2k_t *p_j2k)
                 if (p_j2k->m_specific_param.m_encoder.m_encoded_tile_data) {
                         opj_free(p_j2k->m_specific_param.m_encoder.m_encoded_tile_data);
                         p_j2k->m_specific_param.m_encoder.m_encoded_tile_data = 00;
+						p_j2k->m_specific_param.m_encoder.m_encoded_tile_size = 0;
                 }
 
                 if (p_j2k->m_specific_param.m_encoder.m_tlm_sot_offsets_buffer) {
@@ -10113,7 +10117,9 @@ void opj_j2k_setup_end_compress (opj_j2k_t *p_j2k)
 
         opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_write_epc );
         opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_end_encoding );
-        opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_destroy_header_memory);
+
+		// header memory will be destroyed when j2k object is destroyed, so wait until then
+        //opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_destroy_header_memory);
 }
 
 void opj_j2k_setup_encoding_validation (opj_j2k_t *p_j2k)
