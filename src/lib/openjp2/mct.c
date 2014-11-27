@@ -77,7 +77,30 @@ void opj_mct_encode(
 		OPJ_INT32 r = c0[i];
 		OPJ_INT32 g = c1[i];
 		OPJ_INT32 b = c2[i];
-		OPJ_INT32 y = (r + (g * 2) + b) >> 2;
+		OPJ_INT32 y = (r + (g << 1) + b) >> 2;
+		OPJ_INT32 u = b - g;
+		OPJ_INT32 v = r - g;
+		c0[i] = y;
+		c1[i] = u;
+		c2[i] = v;
+	}
+}
+/* <summary> */
+/* Foward reversible MCT with dc level shift */
+/* </summary> */
+void opj_mct_encode_with_dcshift(
+		OPJ_INT32* restrict c0,
+		OPJ_INT32* restrict c1,
+		OPJ_INT32* restrict c2,
+		OPJ_UINT32 n,
+		OPJ_UINT32 shift)
+{
+	OPJ_UINT32 i;
+	for(i = 0; i < n; ++i) {
+		OPJ_INT32 r = c0[i] ;
+		OPJ_INT32 g = c1[i];
+		OPJ_INT32 b = c2[i];
+		OPJ_INT32 y = ((r + (g << 1) + b) >> 2) - shift;
 		OPJ_INT32 u = b - g;
 		OPJ_INT32 v = r - g;
 		c0[i] = y;
@@ -127,9 +150,9 @@ void opj_mct_encode_real(
 {
 	OPJ_UINT32 i;
 	for(i = 0; i < n; ++i) {
-		OPJ_INT32 r = c0[i];
-		OPJ_INT32 g = c1[i];
-		OPJ_INT32 b = c2[i];
+		OPJ_INT32 r = c0[i] << LOSSY_FP_PRECISION;
+		OPJ_INT32 g = c1[i] << LOSSY_FP_PRECISION;
+		OPJ_INT32 b = c2[i] << LOSSY_FP_PRECISION;
 		OPJ_INT32 y =  opj_int_fix_mul(r, 2449) + opj_int_fix_mul(g, 4809) + opj_int_fix_mul(b, 934);
 		OPJ_INT32 u = -opj_int_fix_mul(r, 1382) - opj_int_fix_mul(g, 2714) + opj_int_fix_mul(b, 4096);
 		OPJ_INT32 v =  opj_int_fix_mul(r, 4096) - opj_int_fix_mul(g, 3430) - opj_int_fix_mul(b, 666);
@@ -138,6 +161,31 @@ void opj_mct_encode_real(
 		c2[i] = v;
 	}
 }
+
+/* <summary> */
+/* Foward irreversible MCT, with dc shift*/
+/* </summary> */
+void opj_mct_encode_real_with_dcshift(
+		OPJ_INT32* restrict c0,
+		OPJ_INT32* restrict c1,
+		OPJ_INT32* restrict c2,
+		OPJ_UINT32 n,
+		OPJ_UINT32 shift)
+{
+	OPJ_UINT32 i;
+	for(i = 0; i < n; ++i) {
+		OPJ_INT32 r = (c0[i] - shift) << LOSSY_FP_PRECISION;
+		OPJ_INT32 g = (c1[i] - shift) << LOSSY_FP_PRECISION;
+		OPJ_INT32 b = (c2[i] - shift) << LOSSY_FP_PRECISION;
+		OPJ_INT32 y =  opj_int_fix_mul(r, 2449) + opj_int_fix_mul(g, 4809) + opj_int_fix_mul(b, 934);
+		OPJ_INT32 u = -opj_int_fix_mul(r, 1382) - opj_int_fix_mul(g, 2714) + opj_int_fix_mul(b, 4096);
+		OPJ_INT32 v =  opj_int_fix_mul(r, 4096) - opj_int_fix_mul(g, 3430) - opj_int_fix_mul(b, 666);
+		c0[i] = y;
+		c1[i] = u;
+		c2[i] = v;
+	}
+}
+
 
 /* <summary> */
 /* Inverse irreversible MCT. */
