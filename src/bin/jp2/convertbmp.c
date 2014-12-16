@@ -606,7 +606,7 @@ static OPJ_BOOL bmp_read_rle4_data(FILE* IN, OPJ_UINT8* pData, OPJ_UINT32 stride
 	return OPJ_TRUE;
 }
 
-opj_image_t* bmptoimage(const char *filename, opj_cparameters_t *parameters)
+opj_image_t* bmptoimage(const char *filename, opj_cparameters_t *parameters, opj_image_t* oldImage)
 {
 	opj_image_cmptparm_t cmptparm[4];	/* maximum of 4 components */
 	OPJ_UINT8 lut_R[256], lut_G[256], lut_B[256];
@@ -619,6 +619,7 @@ opj_image_t* bmptoimage(const char *filename, opj_cparameters_t *parameters)
 	OPJ_BOOL l_result = OPJ_FALSE;
 	OPJ_UINT8* pData = NULL;
 	OPJ_UINT32 stride;
+	OPJ_COLOR_SPACE colourSpace = OPJ_CLRSPC_UNSPECIFIED;
 	
 	pLUT[0] = lut_R; pLUT[1] = lut_G; pLUT[2] = lut_B;
 	
@@ -723,7 +724,15 @@ opj_image_t* bmptoimage(const char *filename, opj_cparameters_t *parameters)
 		cmptparm[i].h    = Info_h.biHeight;
 	}
 
-	image = opj_image_create(numcmpts, &cmptparm[0], (numcmpts == 1U) ? OPJ_CLRSPC_GRAY : OPJ_CLRSPC_SRGB);
+	colourSpace = (numcmpts == 1U) ? OPJ_CLRSPC_GRAY : OPJ_CLRSPC_SRGB;
+	if (!opj_image_header_equals(oldImage, numcmpts, cmptparm + 0, colourSpace))
+	{
+		image = opj_image_create(numcmpts, &cmptparm[0], colourSpace);
+	}
+	else
+		image = oldImage;
+
+
 	if(!image) {
 		fclose(IN);
 		return NULL;

@@ -1985,7 +1985,7 @@ int imagetotif(opj_image_t * image, const char *outfile)
  * libtiff/tif_getimage.c : 1,2,4,8,16 bitspersample accepted
  * CINEMA                 : 12 bit precision
 */
-opj_image_t* tiftoimage(const char *filename, opj_cparameters_t *parameters)
+opj_image_t* tiftoimage(const char *filename, opj_cparameters_t *parameters, opj_image_t* oldImage)
 {
     int subsampling_dx = parameters->subsampling_dx;
     int subsampling_dy = parameters->subsampling_dy;
@@ -2110,11 +2110,16 @@ opj_image_t* tiftoimage(const char *filename, opj_cparameters_t *parameters)
 #endif
         }
 
+		if (!opj_image_header_equals(oldImage, numcomps, cmptparm + 0, color_space))
+		{
 #ifdef USETILEMODE
-        image = opj_image_tile_create(numcomps,&cmptparm[0],color_space);
+			image = opj_image_tile_create(numcomps,&cmptparm[0],color_space);
 #else
-        image = opj_image_create((OPJ_UINT32)numcomps, &cmptparm[0], color_space);
+			image = opj_image_create((OPJ_UINT32)numcomps, &cmptparm[0], color_space);
 #endif
+		}
+		else
+			image = oldImage;
 
         if(!image)
         {

@@ -651,8 +651,10 @@ typedef struct opj_image_comp {
 	OPJ_UINT32 factor;
 	/** image component data */
 	OPJ_INT32 *data;
-  /** alpha channel */
-  OPJ_UINT16 alpha;
+	/** true if component owns its own data, false otherwise */
+	OPJ_BOOL owns_data;
+	/** alpha channel */
+    OPJ_UINT16 alpha;
 } opj_image_comp_t;
 
 /** 
@@ -1069,6 +1071,21 @@ OPJ_API const char * OPJ_CALLCONV opj_version(void);
  * @return returns      a new image structure if successful, returns NULL otherwise
  * */
 OPJ_API opj_image_t* OPJ_CALLCONV opj_image_create(OPJ_UINT32 numcmpts, opj_image_cmptparm_t *cmptparms, OPJ_COLOR_SPACE clrspc);
+
+
+/**
+ * Check if an image header is equivalent to certain parameters
+ *
+ * @param img			image
+ * @param num_components      number of components
+ * @param cmptparms     components parameters
+ * @param clrspc        image color space
+ * @return returns      true if image is equivalent, false otherwise
+ * */
+OPJ_API OPJ_BOOL OPJ_CALLCONV opj_image_header_equals(opj_image_t* img,  OPJ_SIZE_T num_components,
+											opj_image_cmptparm_t* component_parameters, OPJ_COLOR_SPACE color_space);
+
+
 
 /**
  * Deallocate any resources associated with an image

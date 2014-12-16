@@ -4788,12 +4788,15 @@ OPJ_BOOL opj_j2k_update_rates(  opj_j2k_t *p_j2k,
 
         l_tile_size += opj_j2k_get_specific_header_sizes(p_j2k);
 
-        p_j2k->m_specific_param.m_encoder.m_encoded_tile_size = l_tile_size;
+		opj_safe_free(p_j2k->m_specific_param.m_encoder.m_encoded_tile_data);
+		p_j2k->m_specific_param.m_encoder.m_encoded_tile_size = l_tile_size;
         p_j2k->m_specific_param.m_encoder.m_encoded_tile_data =
                         (OPJ_BYTE *) opj_malloc(p_j2k->m_specific_param.m_encoder.m_encoded_tile_size);
         if (p_j2k->m_specific_param.m_encoder.m_encoded_tile_data == 00) {
+				p_j2k->m_specific_param.m_encoder.m_encoded_tile_size = 0;
                 return OPJ_FALSE;
         }
+		
 
         if (OPJ_IS_CINEMA(l_cp->rsiz)) {
                 p_j2k->m_specific_param.m_encoder.m_tlm_sot_offsets_buffer =
@@ -6194,6 +6197,12 @@ OPJ_BOOL opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
                 return OPJ_FALSE;
         }
 
+		//reset current tile number
+		p_j2k->m_current_tile_number = 0;
+
+		// make sure decoder is disabled 
+		p_j2k->m_specific_param.m_decoder.m_state = J2K_STATE_NONE;
+
         if ((parameters->numresolution <= 0) || (parameters->numresolution > OPJ_J2K_MAXRLVLS)) {
             opj_event_msg(p_manager, EVT_ERROR, "Invalid number of resolutions : %d not in range [1,%d]\n", parameters->numresolution, OPJ_J2K_MAXRLVLS);
             return OPJ_FALSE;
@@ -6376,12 +6385,15 @@ OPJ_BOOL opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
 								}
                 sprintf(cp->comment,"%s%s with JPWL", comment, version);
 #else
-                cp->comment = (char*)opj_malloc(clen+strlen(version)+1);
-								if(!cp->comment) {
-								        opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate comment string\n");
-								        return OPJ_FALSE;
-								}
-                sprintf(cp->comment,"%s%s", comment, version);
+				if (!cp->comment) {
+					cp->comment = (char*)opj_malloc(clen+strlen(version)+1);
+									if(!cp->comment) {
+											opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate comment string\n");
+											return OPJ_FALSE;
+									}
+					sprintf(cp->comment,"%s%s", comment, version);
+
+				}
 #endif
                 /* <<UniPG */
 				}
@@ -6461,6 +6473,7 @@ OPJ_BOOL opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
 
         /* initialize the mutiple tiles */
         /* ---------------------------- */
+		opj_safe_free(cp->tcps);
         cp->tcps = (opj_tcp_t*) opj_calloc(cp->tw * cp->th, sizeof(opj_tcp_t));
         if (!cp->tcps) {
                 opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate tile coding parameters\n");
@@ -6521,7 +6534,7 @@ OPJ_BOOL opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
                 }else{
                         tcp->numpocs = 0;
                 }
-
+				opj_safe_free(tcp->tccps);
                 tcp->tccps = (opj_tccp_t*) opj_calloc(image->numcomps, sizeof(opj_tccp_t));
                 if (!tcp->tccps) {
                         opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate tile component coding parameters\n");
@@ -6539,16 +6552,18 @@ OPJ_BOOL opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
                     }
 
                     tcp->mct = 2;
+					opj_safe_free(tcp->m_mct_coding_matrix);
                     tcp->m_mct_coding_matrix = (OPJ_FLOAT32*)opj_malloc(lMctSize);
-										if (! tcp->m_mct_coding_matrix) {
-                            opj_free(lTmpBuf);
-														lTmpBuf = NULL;
-                            opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT coding matrix \n");
-                            return OPJ_FALSE;
+					if (! tcp->m_mct_coding_matrix) {
+						opj_free(lTmpBuf);
+						lTmpBuf = NULL;
+                        opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT coding matrix \n");
+                        return OPJ_FALSE;
                     }
                     memcpy(tcp->m_mct_coding_matrix,parameters->mct_data,lMctSize);
                     memcpy(lTmpBuf,parameters->mct_data,lMctSize);
 
+					opj_safe_free(tcp->m_mct_decoding_matrix);
                     tcp->m_mct_decoding_matrix = (OPJ_FLOAT32*)opj_malloc(lMctSize);
 										if (! tcp->m_mct_decoding_matrix) {
 														opj_free(lTmpBuf);
@@ -6563,13 +6578,13 @@ OPJ_BOOL opj_j2k_setup_encoder(     opj_j2k_t *p_j2k,
                             return OPJ_FALSE;
 										}
 
-                    tcp->mct_norms = (OPJ_FLOAT64*)
-                                    opj_malloc(image->numcomps * sizeof(OPJ_FLOAT64));
-										if (! tcp->mct_norms) {
-                            opj_free(lTmpBuf);
-														lTmpBuf = NULL;
-                            opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT norms \n");
-                            return OPJ_FALSE;
+					opj_safe_free(tcp->mct_norms);
+                    tcp->mct_norms = (OPJ_FLOAT64*) opj_malloc(image->numcomps * sizeof(OPJ_FLOAT64));
+					if (! tcp->mct_norms) {
+                        opj_free(lTmpBuf);
+						lTmpBuf = NULL;
+                        opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to allocate encoder MCT norms \n");
+                        return OPJ_FALSE;
                     }
                     opj_calculate_norms(tcp->mct_norms,image->numcomps,tcp->m_mct_decoding_matrix);
                     opj_free(lTmpBuf);
@@ -7478,6 +7493,7 @@ void opj_j2k_destroy (opj_j2k_t *p_j2k)
                 if (p_j2k->m_specific_param.m_encoder.m_encoded_tile_data) {
                         opj_free(p_j2k->m_specific_param.m_encoder.m_encoded_tile_data);
                         p_j2k->m_specific_param.m_encoder.m_encoded_tile_data = 00;
+						p_j2k->m_specific_param.m_encoder.m_encoded_tile_size = 0;
                 }
 
                 if (p_j2k->m_specific_param.m_encoder.m_tlm_sot_offsets_buffer) {
@@ -9736,7 +9752,7 @@ OPJ_BOOL opj_j2k_get_tile(      opj_j2k_t *p_j2k,
         for (compno = 0; compno < p_image->numcomps; compno++) {
                 p_image->comps[compno].resno_decoded = p_j2k->m_output_image->comps[compno].resno_decoded;
 
-                if (p_image->comps[compno].data)
+				if (p_image->comps[compno].data && p_image->comps[compno].owns_data)
                         opj_free(p_image->comps[compno].data);
 
                 p_image->comps[compno].data = p_j2k->m_output_image->comps[compno].data;
@@ -9897,8 +9913,7 @@ OPJ_BOOL opj_j2k_start_compress(opj_j2k_t *p_j2k,
                 for (it_comp = 0 ; it_comp < p_image->numcomps; it_comp++) {
                         if (p_image->comps[it_comp].data) {
                                 p_j2k->m_private_image->comps[it_comp].data =p_image->comps[it_comp].data;
-                                p_image->comps[it_comp].data = NULL;
-
+								p_j2k->m_private_image->comps[it_comp].owns_data = OPJ_FALSE;
                         }
                 }
         }
@@ -10127,7 +10142,9 @@ void opj_j2k_setup_end_compress (opj_j2k_t *p_j2k)
 
         opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_write_epc );
         opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_end_encoding );
-        opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_destroy_header_memory);
+
+		// header memory will be destroyed when j2k object is destroyed, so wait until then
+        //opj_procedure_list_add_procedure(p_j2k->m_procedure_list,(opj_procedure)opj_j2k_destroy_header_memory);
 }
 
 void opj_j2k_setup_encoding_validation (opj_j2k_t *p_j2k)
@@ -10416,8 +10433,9 @@ OPJ_BOOL opj_j2k_end_encoding(  opj_j2k_t *p_j2k,
         assert(p_manager != 00);
         assert(p_stream != 00);
 
-        opj_tcd_destroy(p_j2k->m_tcd);
-        p_j2k->m_tcd = 00;
+		// no need to destroy tcd here: it will be destroyed when p_j2k is destroyed
+        //opj_tcd_destroy(p_j2k->m_tcd);
+        //p_j2k->m_tcd = 00;
 
         if (p_j2k->m_specific_param.m_encoder.m_tlm_sot_offsets_buffer) {
                 opj_free(p_j2k->m_specific_param.m_encoder.m_tlm_sot_offsets_buffer);
@@ -10529,12 +10547,14 @@ static OPJ_BOOL opj_j2k_create_tcd(     opj_j2k_t *p_j2k,
         assert(p_manager != 00);
         assert(p_stream != 00);
 
-        p_j2k->m_tcd = opj_tcd_create(OPJ_FALSE);
+		if (!p_j2k->m_tcd) {
+			p_j2k->m_tcd = opj_tcd_create(OPJ_FALSE);
 
-        if (! p_j2k->m_tcd) {
-                opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to create Tile Coder\n");
-                return OPJ_FALSE;
-        }
+			if (! p_j2k->m_tcd) {
+					opj_event_msg(p_manager, EVT_ERROR, "Not enough memory to create Tile Coder\n");
+					return OPJ_FALSE;
+			}
+		}
 
         if (!opj_tcd_init(p_j2k->m_tcd,p_j2k->m_private_image,&p_j2k->m_cp)) {
                 opj_tcd_destroy(p_j2k->m_tcd);
